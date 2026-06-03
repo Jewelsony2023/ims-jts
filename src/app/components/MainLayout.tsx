@@ -10,6 +10,7 @@ import {
   Archive,
   FileText,
   UserCog,
+  UserCircle,
   Bell,
   LogOut,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const navItems = [
   { icon: Archive, label: "Inventory", path: "/inventory" },
   { icon: FileText, label: "Audit Logs", path: "/audit-logs" },
   { icon: UserCog, label: "User Management", path: "/users" },
+  { icon: UserCircle, label: "Profile", path: "/profile" },
 ];
 
 export function MainLayout() {

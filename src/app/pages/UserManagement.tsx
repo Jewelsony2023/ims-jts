@@ -129,7 +129,7 @@ export function UserManagement() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -194,7 +194,7 @@ export function UserManagement() {
       </div>
 
       {/* Role Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="border-none shadow-md border-l-4 border-l-purple-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -264,8 +264,8 @@ export function UserManagement() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Last Login</TableHead>
+                <TableHead className="hidden md:table-cell">Department</TableHead>
+                <TableHead className="hidden md:table-cell">Last Login</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -293,8 +293,8 @@ export function UserManagement() {
                     {user.email}
                   </TableCell>
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
-                  <TableCell className="text-sm">{user.department}</TableCell>
-                  <TableCell className="text-sm text-slate-600">
+                  <TableCell className="text-sm hidden md:table-cell">{user.department}</TableCell>
+                  <TableCell className="text-sm text-slate-600 hidden md:table-cell">
                     {user.lastLogin}
                   </TableCell>
                   <TableCell>

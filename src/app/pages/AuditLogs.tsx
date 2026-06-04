@@ -148,7 +148,7 @@ export function AuditLogs() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -209,7 +209,7 @@ export function AuditLogs() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-center gap-4 w-full">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
@@ -253,29 +253,29 @@ export function AuditLogs() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Log ID</TableHead>
+                <TableHead className="hidden md:table-cell">Log ID</TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Action</TableHead>
                 <TableHead>Entity</TableHead>
-                <TableHead>Details</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>IP Address</TableHead>
+                <TableHead className="hidden lg:table-cell">Details</TableHead>
+                <TableHead className="hidden sm:table-cell">Timestamp</TableHead>
+                <TableHead className="hidden md:table-cell">IP Address</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {auditLogs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="font-mono text-sm">{log.id}</TableCell>
+                  <TableCell className="font-mono text-sm hidden md:table-cell">{log.id}</TableCell>
                   <TableCell className="font-medium">{log.user}</TableCell>
                   <TableCell>{getActionBadge(log.action)}</TableCell>
                   <TableCell className="font-medium">{log.entity}</TableCell>
-                  <TableCell className="text-sm text-slate-600 max-w-xs truncate">
+                  <TableCell className="text-sm text-slate-600 max-w-xs truncate hidden lg:table-cell">
                     {log.details}
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">
+                  <TableCell className="text-sm text-slate-600 hidden sm:table-cell">
                     {log.timestamp}
                   </TableCell>
-                  <TableCell className="font-mono text-sm text-slate-600">
+                  <TableCell className="font-mono text-sm text-slate-600 hidden md:table-cell">
                     {log.ipAddress}
                   </TableCell>
                 </TableRow>

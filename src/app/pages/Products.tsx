@@ -242,10 +242,10 @@ export function Products() {
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Barcode</TableHead>
+                <TableHead className="hidden md:table-cell">SKU</TableHead>
+                <TableHead className="hidden md:table-cell">Barcode</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead className="hidden lg:table-cell">Description</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -269,14 +269,14 @@ export function Products() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm hidden md:table-cell">
                     {product.sku}
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm hidden md:table-cell">
                     {product.barcode}
                   </TableCell>
                   <TableCell>{product.category}</TableCell>
-                  <TableCell className="max-w-xs truncate text-sm text-slate-600">
+                  <TableCell className="max-w-xs truncate text-sm text-slate-600 hidden lg:table-cell">
                     {product.description}
                   </TableCell>
                   <TableCell>

@@ -195,7 +195,7 @@ export function PurchaseOrders() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -270,10 +270,10 @@ export function PurchaseOrders() {
               <TableRow>
                 <TableHead>PO Number</TableHead>
                 <TableHead>Supplier</TableHead>
-                <TableHead>Order Date</TableHead>
-                <TableHead>Items</TableHead>
+                <TableHead className="hidden md:table-cell">Order Date</TableHead>
+                <TableHead className="hidden sm:table-cell">Items</TableHead>
                 <TableHead>Total Amount</TableHead>
-                <TableHead>Delivery Date</TableHead>
+                <TableHead className="hidden md:table-cell">Delivery Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -283,12 +283,12 @@ export function PurchaseOrders() {
                 <TableRow key={po.id}>
                   <TableCell className="font-mono font-semibold">{po.id}</TableCell>
                   <TableCell className="font-medium">{po.supplier}</TableCell>
-                  <TableCell>{po.date}</TableCell>
-                  <TableCell>{po.items}</TableCell>
+                  <TableCell className="hidden md:table-cell">{po.date}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{po.items}</TableCell>
                   <TableCell className="font-semibold">
                     ${po.totalAmount.toLocaleString()}
                   </TableCell>
-                  <TableCell>{po.deliveryDate}</TableCell>
+                  <TableCell className="hidden md:table-cell">{po.deliveryDate}</TableCell>
                   <TableCell>{getStatusBadge(po.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">

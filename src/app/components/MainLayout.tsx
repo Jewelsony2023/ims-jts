@@ -39,8 +39,8 @@ const navItems = [
     path: "/inventory",
     children: [
       { icon: PackageCheck, label: "Inventory View", path: "/inventory" },
-      { icon: TrendingUp, label: "Stock In", path: "/inventory/stock-in" },
-      { icon: TrendingDown, label: "Stock Out", path: "/inventory/stock-out" },
+      { icon: TrendingUp, label: "Stock In", path: "/stock-in" },
+      { icon: TrendingDown, label: "Stock Out", path: "/stock-out" },
     ],
   },
   { icon: Package, label: "Products", path: "/products" },

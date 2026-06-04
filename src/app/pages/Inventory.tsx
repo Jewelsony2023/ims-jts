@@ -170,7 +170,7 @@ export function Inventory() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <p className="text-sm text-slate-600 mb-1">Total Items</p>
@@ -251,11 +251,11 @@ export function Inventory() {
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Batch Number</TableHead>
+                <TableHead className="hidden md:table-cell">SKU</TableHead>
+                <TableHead className="hidden md:table-cell">Batch Number</TableHead>
                 <TableHead>Quantity</TableHead>
-                <TableHead>Batch Cost Price</TableHead>
-                <TableHead>Batch Value</TableHead>
+                <TableHead className="hidden md:table-cell">Batch Cost Price</TableHead>
+                <TableHead className="hidden md:table-cell">Batch Value</TableHead>
                 <TableHead>Expiry Date</TableHead>
                 <TableHead>Days Remaining</TableHead>
                 <TableHead>Status</TableHead>
@@ -279,8 +279,8 @@ export function Inventory() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{item.sku}</TableCell>
-                  <TableCell className="font-mono text-sm">{item.batch}</TableCell>
+                  <TableCell className="font-mono text-sm hidden md:table-cell">{item.sku}</TableCell>
+                  <TableCell className="font-mono text-sm hidden md:table-cell">{item.batch}</TableCell>
                   <TableCell>
                     <span
                       className={
@@ -292,8 +292,8 @@ export function Inventory() {
                       {item.quantity}
                     </span>
                   </TableCell>
-                  <TableCell>₹{item.costPrice.toFixed(2)}</TableCell>
-                  <TableCell className="font-semibold">
+                  <TableCell className="hidden md:table-cell">₹{item.costPrice.toFixed(2)}</TableCell>
+                  <TableCell className="font-semibold hidden md:table-cell">
                     ₹{(item.quantity * item.costPrice).toLocaleString()}
                   </TableCell>
                   <TableCell>{item.expiry}</TableCell>

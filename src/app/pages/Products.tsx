@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Filter, Edit, Trash2, Eye, ImageIcon, Upload } from "lucide-react";
+import { Plus, Search, Filter, Edit, Trash2, Eye, Upload } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -20,6 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import { Label } from "../components/ui/label";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
 const products = [
@@ -30,8 +39,7 @@ const products = [
     sku: "MED-001",
     barcode: "8901234567890",
     category: "Antibiotics",
-    costPrice: 12.5,
-    sellingPrice: 18.99,
+    description: "Broad-spectrum antibiotic capsule for prescription inventory.",
     stock: 450,
     status: "In Stock",
   },
@@ -42,8 +50,7 @@ const products = [
     sku: "MED-002",
     barcode: "8901234567891",
     category: "Pain Relief",
-    costPrice: 5.25,
-    sellingPrice: 9.99,
+    description: "Pain relief and fever medicine.",
     stock: 890,
     status: "In Stock",
   },
@@ -54,8 +61,7 @@ const products = [
     sku: "MED-003",
     barcode: "8901234567892",
     category: "Diabetes",
-    costPrice: 45.0,
-    sellingPrice: 68.99,
+    description: "Cold-chain insulin vial inventory.",
     stock: 180,
     status: "In Stock",
   },
@@ -66,8 +72,7 @@ const products = [
     sku: "PPE-001",
     barcode: "8901234567893",
     category: "PPE",
-    costPrice: 8.5,
-    sellingPrice: 14.99,
+    description: "Disposable protective masks box.",
     stock: 45,
     status: "Low Stock",
   },
@@ -78,8 +83,7 @@ const products = [
     sku: "HYG-001",
     barcode: "8901234567894",
     category: "Hygiene",
-    costPrice: 3.25,
-    sellingPrice: 6.99,
+    description: "Alcohol-based hand sanitizer bottle.",
     stock: 320,
     status: "In Stock",
   },
@@ -90,8 +94,7 @@ const products = [
     sku: "VIT-001",
     barcode: "8901234567895",
     category: "Vitamins",
-    costPrice: 7.5,
-    sellingPrice: 12.99,
+    description: "Vitamin supplement tablets.",
     stock: 12,
     status: "Expiring Soon",
   },
@@ -102,8 +105,7 @@ const products = [
     sku: "BEV-001",
     barcode: "8901234567896",
     category: "Beverages",
-    costPrice: 2.75,
-    sellingPrice: 5.49,
+    description: "Packaged organic apple juice.",
     stock: 245,
     status: "In Stock",
   },
@@ -114,8 +116,7 @@ const products = [
     sku: "DAI-001",
     barcode: "8901234567897",
     category: "Dairy",
-    costPrice: 1.85,
-    sellingPrice: 3.99,
+    description: "Fresh strawberry yogurt.",
     stock: 0,
     status: "Expired",
   },
@@ -143,9 +144,9 @@ export function Products() {
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
               type="text"
@@ -156,7 +157,7 @@ export function Products() {
             />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[200px] bg-white">
+            <SelectTrigger className="w-full bg-white md:w-[200px]">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
@@ -173,14 +174,65 @@ export function Products() {
             </SelectContent>
           </Select>
         </div>
-        <Button className="bg-emerald-500 hover:bg-emerald-600">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Product
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="bg-emerald-500 hover:bg-emerald-600">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Product
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add Product</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {[
+                ["name", "Product Name"],
+                ["sku", "SKU"],
+                ["barcode", "Barcode"],
+                ["stock", "Opening Stock"],
+              ].map(([id, label]) => (
+                <div key={id} className="space-y-2">
+                  <Label htmlFor={id}>{label}</Label>
+                  <Input id={id} className="bg-white" />
+                </div>
+              ))}
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="antibiotics">Antibiotics</SelectItem>
+                    <SelectItem value="pain-relief">Pain Relief</SelectItem>
+                    <SelectItem value="ppe">PPE</SelectItem>
+                    <SelectItem value="beverages">Beverages</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Input id="description" placeholder="Product description" className="bg-white" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="image">Product Image</Label>
+                <div className="flex items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+                  <Upload className="h-5 w-5 text-emerald-600" />
+                  <Input id="image" type="file" className="bg-white" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button className="bg-emerald-500 hover:bg-emerald-600">
+                Save Product
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Products Table */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
       <Card className="border-none shadow-md">
         <CardHeader>
           <CardTitle className="text-lg">Products Catalog</CardTitle>
@@ -193,8 +245,7 @@ export function Products() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Barcode</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Cost Price</TableHead>
-                <TableHead>Selling Price</TableHead>
+                <TableHead>Description</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -225,9 +276,8 @@ export function Products() {
                     {product.barcode}
                   </TableCell>
                   <TableCell>{product.category}</TableCell>
-                  <TableCell>${product.costPrice.toFixed(2)}</TableCell>
-                  <TableCell className="font-semibold">
-                    ${product.sellingPrice.toFixed(2)}
+                  <TableCell className="max-w-xs truncate text-sm text-slate-600">
+                    {product.description}
                   </TableCell>
                   <TableCell>
                     <span
@@ -262,39 +312,6 @@ export function Products() {
           </Table>
         </CardContent>
       </Card>
-      <Card className="border-none shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg">Product Images</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100">
-              <Upload className="h-6 w-6 text-emerald-600" />
-            </div>
-            <p className="font-semibold text-slate-800">Upload product image</p>
-            <p className="mt-1 text-sm text-slate-500">
-              JPG, PNG, or WebP up to 5MB
-            </p>
-            <Button variant="outline" className="mt-4 bg-white">
-              Browse files
-            </Button>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100">
-                <ImageIcon className="h-6 w-6 text-slate-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-slate-800">Placeholder support</p>
-                <p className="text-sm text-slate-500">
-                  Missing images render with a stable thumbnail footprint.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      </div>
     </div>
   );
 }

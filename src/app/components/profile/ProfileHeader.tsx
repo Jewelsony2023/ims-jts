@@ -2,7 +2,6 @@ import {
   CalendarClock,
   Camera,
   IdCard,
-  KeyRound,
   Mail,
   Pencil,
   Phone,
@@ -17,7 +16,6 @@ import type { UserEntity } from "../../types/profile";
 interface ProfileHeaderProps {
   user: UserEntity;
   onEditProfile: () => void;
-  onChangePassword: () => void;
   onUploadImage: (file: File) => void;
 }
 
@@ -33,7 +31,6 @@ function getInitials(fullName: string) {
 export function ProfileHeader({
   user,
   onEditProfile,
-  onChangePassword,
   onUploadImage,
 }: ProfileHeaderProps) {
   return (
@@ -109,10 +106,6 @@ export function ProfileHeader({
             <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={onEditProfile}>
               <Pencil className="h-4 w-4" />
               Edit Profile
-            </Button>
-            <Button variant="outline" className="bg-white" onClick={onChangePassword}>
-              <KeyRound className="h-4 w-4" />
-              Change Password
             </Button>
             <label>
               <Button variant="outline" className="bg-white" asChild>

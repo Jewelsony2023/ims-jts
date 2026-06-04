@@ -12,6 +12,7 @@ import { Inventory } from "./pages/Inventory";
 import { AuditLogs } from "./pages/AuditLogs";
 import { UserManagement } from "./pages/UserManagement";
 import { UserProfile } from "./pages/UserProfile";
+import { Settings } from "./pages/Settings";
 import { MainLayout } from "./components/MainLayout";
 
 export const router = createBrowserRouter([
@@ -29,12 +30,15 @@ export const router = createBrowserRouter([
       { path: "categories", Component: Categories },
       { path: "suppliers", Component: Suppliers },
       { path: "purchase-orders", Component: PurchaseOrders },
+      { path: "inventory", Component: Inventory },
+      { path: "inventory/stock-in", Component: StockIn },
+      { path: "inventory/stock-out", Component: StockOut },
       { path: "stock-in", Component: StockIn },
       { path: "stock-out", Component: StockOut },
-      { path: "inventory", Component: Inventory },
       { path: "audit-logs", Component: AuditLogs },
       { path: "users", Component: UserManagement },
       { path: "profile", Component: UserProfile },
+      { path: "settings", Component: Settings },
     ],
   },
 ]);

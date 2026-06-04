@@ -1,5 +1,4 @@
-import { Search, Filter, Download, FileText } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { Search, Filter, FileText } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -139,17 +138,13 @@ export function AuditLogs() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Audit Logs</h1>
           <p className="text-slate-600 mt-1">
             Complete activity history and transaction logs
           </p>
         </div>
-        <Button className="bg-emerald-500 hover:bg-emerald-600">
-          <Download className="w-4 h-4 mr-2" />
-          Export Logs
-        </Button>
       </div>
 
       {/* Statistics */}

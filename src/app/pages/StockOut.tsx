@@ -1,8 +1,9 @@
-import { Save, ImageIcon } from "lucide-react";
+import { useState } from "react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,241 +11,169 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+
+interface StockOutRow {
+  id: number;
+  product: string;
+  batch: string;
+  availableQuantity: number;
+  batchCostPrice: number;
+  batchSellingPrice: number;
+  transactionSellingPrice: string;
+  quantityToIssue: string;
+}
+
+const batchOptions = [
+  { product: "Paracetamol 500mg", batch: "BAT-2402", available: 890, costPrice: 45, sellingPrice: 55 },
+  { product: "Vitamin C Tablets", batch: "BAT-2406", available: 12, costPrice: 52, sellingPrice: 55 },
+  { product: "Surgical Masks", batch: "BAT-2404", available: 45, costPrice: 8.5, sellingPrice: 14.99 },
+  { product: "Hand Sanitizer 500ml", batch: "BAT-2405", available: 320, costPrice: 3.25, sellingPrice: 6.99 },
+];
+
+const createRow = (id: number): StockOutRow => ({
+  id,
+  product: "",
+  batch: "",
+  availableQuantity: 0,
+  batchCostPrice: 0,
+  batchSellingPrice: 0,
+  transactionSellingPrice: "",
+  quantityToIssue: "",
+});
 
 export function StockOut() {
+  const [rows, setRows] = useState<StockOutRow[]>([createRow(1), createRow(2)]);
+
+  const updateRow = (id: number, key: keyof StockOutRow, value: string | number) => {
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Stock Out</h1>
-        <p className="text-slate-600 mt-1">
-          Issue inventory and update stock levels
+        <p className="mt-1 text-slate-600">
+          Issue multiple products in one controlled stock-out transaction.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Stock Out Form */}
-        <div className="lg:col-span-2">
-          <Card className="border-none shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg">Stock Issuance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6 flex items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1505575967455-8e8f83e8511f?w=160&h=160&fit=crop"
-                  alt="Selected product"
-                  className="h-20 w-20 rounded-lg object-cover bg-white"
-                />
-                <div className="flex-1">
-                  <p className="font-semibold text-slate-800">Product image preview</p>
-                  <p className="text-sm text-slate-500">
-                    Confirms the selected product before batch issue.
-                  </p>
-                </div>
-                <div className="hidden h-10 w-10 items-center justify-center rounded-lg bg-white md:flex">
-                  <ImageIcon className="h-5 w-5 text-slate-400" />
-                </div>
-              </div>
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="product">Product</Label>
-                    <Select>
-                      <SelectTrigger id="product">
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Amoxicillin 500mg</SelectItem>
-                        <SelectItem value="2">Paracetamol 500mg</SelectItem>
-                        <SelectItem value="3">Insulin Vials</SelectItem>
-                        <SelectItem value="4">Surgical Masks</SelectItem>
-                        <SelectItem value="5">Hand Sanitizer 500ml</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+      <Card className="border-none shadow-md">
+        <CardHeader>
+          <CardTitle className="text-lg">Issue Transaction</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="issuedTo">Issued To</Label>
+              <Input id="issuedTo" placeholder="Recipient, shop, or department" className="bg-white" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="issueDate">Issue Date</Label>
+              <Input id="issueDate" type="date" className="bg-white" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reference">Reference Number</Label>
+              <Input id="reference" placeholder="Invoice or transfer reference" className="bg-white" />
+            </div>
+          </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="batch">Batch Number</Label>
-                    <Select>
-                      <SelectTrigger id="batch">
-                        <SelectValue placeholder="Select batch" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">BAT-2401 (Exp: 2027-05-15)</SelectItem>
-                        <SelectItem value="2">BAT-2402 (Exp: 2027-04-20)</SelectItem>
-                        <SelectItem value="3">BAT-2403 (Exp: 2027-03-10)</SelectItem>
-                        <SelectItem value="4">BAT-2404 (Exp: 2026-06-15)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="md:col-span-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-slate-600">Available Quantity:</p>
-                        <p className="text-xl font-bold text-slate-800">450 units</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">Expiry Date:</p>
-                        <p className="text-xl font-bold text-slate-800">2027-05-15</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity to Issue</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      placeholder="Enter quantity"
-                      className="bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reason">Reason</Label>
-                    <Select>
-                      <SelectTrigger id="reason">
-                        <SelectValue placeholder="Select reason" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sale">Sale</SelectItem>
-                        <SelectItem value="transfer">Transfer</SelectItem>
-                        <SelectItem value="damage">Damage/Wastage</SelectItem>
-                        <SelectItem value="sample">Sample</SelectItem>
-                        <SelectItem value="return">Return</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="issuedTo">Issued To</Label>
-                    <Input
-                      id="issuedTo"
-                      placeholder="Enter recipient name"
-                      className="bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department/Location</Label>
-                    <Input
-                      id="department"
-                      placeholder="Enter department"
-                      className="bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reference">Reference Number</Label>
-                    <Input
-                      id="reference"
-                      placeholder="Invoice/Receipt number"
-                      className="bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Issue Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      className="bg-white"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="notes">Notes (Optional)</Label>
-                    <Input
-                      id="notes"
-                      placeholder="Add any additional notes"
-                      className="bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-3 justify-end pt-4">
-                  <Button type="button" variant="outline">
-                    Clear Form
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Confirm Stock Out
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Stock Out Entries */}
-        <div className="lg:col-span-1">
-          <Card className="border-none shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Issuances</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  {
-                    product: "Organic Apple Juice",
-                    quantity: 120,
-                    date: "2026-06-03",
-                    issuedTo: "Retail Store A",
-                  },
-                  {
-                    product: "Surgical Masks",
-                    quantity: 75,
-                    date: "2026-06-02",
-                    issuedTo: "Hospital Ward B",
-                  },
-                  {
-                    product: "Hand Sanitizer",
-                    quantity: 50,
-                    date: "2026-06-02",
-                    issuedTo: "Office Department",
-                  },
-                  {
-                    product: "Paracetamol 500mg",
-                    quantity: 200,
-                    date: "2026-06-01",
-                    issuedTo: "Pharmacy Counter",
-                  },
-                  {
-                    product: "Vitamin C Tablets",
-                    quantity: 80,
-                    date: "2026-05-31",
-                    issuedTo: "Wellness Center",
-                  },
-                ].map((entry, index) => (
-                  <div
-                    key={index}
-                    className="p-4 bg-red-50 rounded-lg border border-red-100"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-slate-800 text-sm">
-                        {entry.product}
-                      </h4>
-                      <span className="font-semibold text-red-700">
-                        -{entry.quantity}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1 text-xs text-slate-600">
-                      <span>{entry.issuedTo}</span>
-                      <span>{entry.date}</span>
-                    </div>
-                  </div>
+          <div className="rounded-lg border border-slate-200">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[220px]">Product</TableHead>
+                  <TableHead className="min-w-[180px]">Batch</TableHead>
+                  <TableHead className="min-w-[150px]">Available Quantity</TableHead>
+                  <TableHead className="min-w-[140px]">Batch Cost Price</TableHead>
+                  <TableHead className="min-w-[150px]">Batch Selling Price</TableHead>
+                  <TableHead className="min-w-[170px]">Final Selling Price</TableHead>
+                  <TableHead className="min-w-[170px]">Quantity To Issue</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <Select value={row.product} onValueChange={(value) => updateRow(row.id, "product", value)}>
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Select product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...new Set(batchOptions.map((item) => item.product))].map((product) => (
+                            <SelectItem key={product} value={product}>{product}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={row.batch}
+                        onValueChange={(value) => {
+                          const selected = batchOptions.find((item) => item.batch === value);
+                          updateRow(row.id, "batch", value);
+                          updateRow(row.id, "availableQuantity", selected?.available ?? 0);
+                          updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
+                          updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
+                          updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
+                        }}
+                      >
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Select batch" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {batchOptions
+                            .filter((item) => !row.product || item.product === row.product)
+                            .map((item) => (
+                              <SelectItem key={item.batch} value={item.batch}>{item.batch}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="font-semibold text-slate-800">
+                      {row.availableQuantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-semibold text-slate-800">₹{row.batchCostPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-slate-800">₹{row.batchSellingPrice.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Input type="number" step="0.01" value={row.transactionSellingPrice} onChange={(event) => updateRow(row.id, "transactionSellingPrice", event.target.value)} className="bg-white" />
+                    </TableCell>
+                    <TableCell>
+                      <Input type="number" value={row.quantityToIssue} onChange={(event) => updateRow(row.id, "quantityToIssue", event.target.value)} className="bg-white" />
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button variant="outline" className="bg-white" onClick={() => setRows((current) => [...current, createRow(Date.now())])}>
+              <Plus className="h-4 w-4" />
+              Add Row
+            </Button>
+            <Button className="bg-orange-500 hover:bg-orange-600">
+              <Save className="h-4 w-4" />
+              Submit Transaction
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

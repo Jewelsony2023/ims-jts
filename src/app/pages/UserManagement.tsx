@@ -353,7 +353,7 @@ export function UserManagement() {
                   { name: "Stock In/Out", admin: true, manager: true, operator: true, viewer: false },
                   { name: "Manage Suppliers", admin: true, manager: true, operator: false, viewer: false },
                   { name: "Create Purchase Orders", admin: true, manager: true, operator: false, viewer: false },
-                  { name: "View Reports", admin: true, manager: true, operator: true, viewer: true },
+                  { name: "View Dashboard", admin: true, manager: true, operator: true, viewer: true },
                   { name: "Manage Users", admin: true, manager: false, operator: false, viewer: false },
                   { name: "System Settings", admin: true, manager: false, operator: false, viewer: false },
                 ].map((perm, index) => (

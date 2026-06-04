@@ -29,13 +29,13 @@ const notificationOptions = [
   },
   {
     key: "dailyReports",
-    label: "Daily Reports",
+    label: "Daily Summary",
     detail: "Receive end-of-day inventory movement summaries",
     icon: FileBarChart,
   },
   {
     key: "weeklyReports",
-    label: "Weekly Reports",
+    label: "Weekly Summary",
     detail: "Receive weekly stock and purchasing summaries",
     icon: FileBarChart,
   },

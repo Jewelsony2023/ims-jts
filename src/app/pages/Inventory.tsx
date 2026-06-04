@@ -27,6 +27,7 @@ const inventory = [
     sku: "MED-001",
     batch: "BAT-2401",
     quantity: 450,
+    costPrice: 45,
     expiry: "2027-05-15",
     daysRemaining: 346,
     status: "Good",
@@ -37,6 +38,7 @@ const inventory = [
     sku: "MED-002",
     batch: "BAT-2402",
     quantity: 890,
+    costPrice: 52,
     expiry: "2027-04-20",
     daysRemaining: 321,
     status: "Good",
@@ -47,6 +49,7 @@ const inventory = [
     sku: "MED-003",
     batch: "BAT-2403",
     quantity: 180,
+    costPrice: 45.0,
     expiry: "2027-03-10",
     daysRemaining: 280,
     status: "Good",
@@ -57,6 +60,7 @@ const inventory = [
     sku: "PPE-001",
     batch: "BAT-2404",
     quantity: 45,
+    costPrice: 8.5,
     expiry: "2028-01-20",
     daysRemaining: 596,
     status: "Low Stock",
@@ -67,6 +71,7 @@ const inventory = [
     sku: "HYG-001",
     batch: "BAT-2405",
     quantity: 320,
+    costPrice: 3.25,
     expiry: "2026-12-15",
     daysRemaining: 195,
     status: "Good",
@@ -77,6 +82,7 @@ const inventory = [
     sku: "VIT-001",
     batch: "BAT-2406",
     quantity: 12,
+    costPrice: 7.5,
     expiry: "2026-06-20",
     daysRemaining: 17,
     status: "Expiring Soon",
@@ -87,6 +93,7 @@ const inventory = [
     sku: "BEV-001",
     batch: "BAT-2407",
     quantity: 245,
+    costPrice: 2.75,
     expiry: "2026-08-10",
     daysRemaining: 68,
     status: "Good",
@@ -97,6 +104,7 @@ const inventory = [
     sku: "DAI-001",
     batch: "BAT-2408",
     quantity: 0,
+    costPrice: 1.85,
     expiry: "2026-05-28",
     daysRemaining: -6,
     status: "Expired",
@@ -107,6 +115,7 @@ const inventory = [
     sku: "MED-004",
     batch: "BAT-2409",
     quantity: 35,
+    costPrice: 4.25,
     expiry: "2027-02-15",
     daysRemaining: 257,
     status: "Low Stock",
@@ -117,6 +126,7 @@ const inventory = [
     sku: "MED-005",
     batch: "BAT-2410",
     quantity: 520,
+    costPrice: 1.2,
     expiry: "2028-06-30",
     daysRemaining: 757,
     status: "Good",
@@ -124,6 +134,10 @@ const inventory = [
 ];
 
 export function Inventory() {
+  const inventoryValue = inventory.reduce(
+    (total, item) => total + item.quantity * item.costPrice,
+    0,
+  );
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Good":
@@ -168,10 +182,9 @@ export function Inventory() {
 
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
-            <p className="text-sm text-slate-600 mb-1">Good Status</p>
-            <h3 className="text-3xl font-bold text-emerald-600">
-              {inventory.filter((i) => i.status === "Good").length}
-            </h3>
+            <p className="text-sm text-slate-600 mb-1">Inventory Value</p>
+            <h3 className="text-3xl font-bold text-emerald-600">₹{inventoryValue.toLocaleString()}</h3>
+            <p className="mt-1 text-xs text-slate-500">Qty x batch cost</p>
           </CardContent>
         </Card>
 
@@ -241,6 +254,8 @@ export function Inventory() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Batch Number</TableHead>
                 <TableHead>Quantity</TableHead>
+                <TableHead>Batch Cost Price</TableHead>
+                <TableHead>Batch Value</TableHead>
                 <TableHead>Expiry Date</TableHead>
                 <TableHead>Days Remaining</TableHead>
                 <TableHead>Status</TableHead>
@@ -276,6 +291,10 @@ export function Inventory() {
                     >
                       {item.quantity}
                     </span>
+                  </TableCell>
+                  <TableCell>₹{item.costPrice.toFixed(2)}</TableCell>
+                  <TableCell className="font-semibold">
+                    ₹{(item.quantity * item.costPrice).toLocaleString()}
                   </TableCell>
                   <TableCell>{item.expiry}</TableCell>
                   <TableCell>

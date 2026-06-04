@@ -1,4 +1,4 @@
-import { Plus, Eye, FileText } from "lucide-react";
+import { Plus, Eye, FileText, Filter, Search } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -115,7 +115,7 @@ export function PurchaseOrders() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Purchase Orders</h1>
           <p className="text-slate-600 mt-1">
@@ -172,6 +172,26 @@ export function PurchaseOrders() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative w-full md:max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input placeholder="Search purchase orders..." className="bg-white pl-10" />
+        </div>
+        <Select defaultValue="all">
+          <SelectTrigger className="w-full bg-white md:w-[220px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="transit">In Transit</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Statistics */}
@@ -240,7 +260,6 @@ export function PurchaseOrders() {
       </div>
 
       {/* Purchase Orders Table */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
       <Card className="border-none shadow-md">
         <CardHeader>
           <CardTitle className="text-lg">All Purchase Orders</CardTitle>
@@ -287,49 +306,6 @@ export function PurchaseOrders() {
           </Table>
         </CardContent>
       </Card>
-      <Card className="border-none shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg">Order Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg bg-slate-50 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-mono font-semibold text-slate-800">{purchaseOrders[2].id}</p>
-                <p className="text-sm text-slate-500">{purchaseOrders[2].supplier}</p>
-              </div>
-              {getStatusBadge(purchaseOrders[2].status)}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-slate-500">Supplier Contact</p>
-              <p className="font-semibold text-slate-800">{purchaseOrders[2].contact}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Delivery Date</p>
-              <p className="font-semibold text-slate-800">{purchaseOrders[2].deliveryDate}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Items</p>
-              <p className="font-semibold text-slate-800">{purchaseOrders[2].items}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Total</p>
-              <p className="font-semibold text-emerald-600">${purchaseOrders[2].totalAmount.toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="font-semibold text-slate-800">Order Lines</p>
-            {purchaseOrders[2].lines.map((line) => (
-              <div key={line} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                {line}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      </div>
     </div>
   );
 }

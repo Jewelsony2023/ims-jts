@@ -9,3 +9,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 vite-dev*.log
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# ASP.NET logs
+logs/

@@ -116,6 +116,7 @@ public class InventoryDbContext : DbContext
             .WithMany()
             .HasForeignKey(al => al.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+            
         modelBuilder.Entity<ProductBatch>()
             .Property(x => x.CostPrice)
             .HasPrecision(18, 2);
@@ -139,5 +140,5 @@ public class InventoryDbContext : DbContext
         modelBuilder.Entity<StockTransactionItem>()
             .Property(x => x.SellingPriceAtTransaction)
             .HasPrecision(18, 2);
-            }
+    }
 }

@@ -3,16 +3,22 @@ using InventoryManagement.API.DTOs;
 using InventoryManagement.API.Interfaces.Repositories;
 using InventoryManagement.API.Interfaces.Services;
 using InventoryManagement.API.Models;
+using InventoryManagement.API.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace InventoryManagement.API.Services;
 
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly JwtSettings _jwtSettings;
 
-    public AuthService(IUserRepository userRepository)
+    public AuthService(
+        IUserRepository userRepository,
+        IOptions<JwtSettings> jwtOptions)
     {
         _userRepository = userRepository;
+        _jwtSettings = jwtOptions.Value;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(
@@ -41,47 +47,59 @@ public class AuthService : IAuthService
 
         await _userRepository.CreateAsync(user);
 
-        return new AuthResponseDto
-        {
-            Email = user.Email,
-            Role = "User",
-            Token = string.Empty
-        };
-    }
+        var token =
+            JwtTokenGenerator.GenerateToken(
+                user,
+                _jwtSettings);
 
-    public async Task<AuthResponseDto> LoginAsync(
-        LoginRequestDto request)
-    {
-        var user =
-            await _userRepository.GetByEmailAsync(
-                request.Email);
-
-        if (user == null)
-        {
-            throw new Exception(
-                "Invalid email or password.");
-        }
-
-        var passwordValid =
-            PasswordHasher.VerifyPassword(
-                request.Password,
-                user.PasswordHash);
-
-        if (!passwordValid)
-        {
-            throw new Exception(
-                "Invalid email or password.");
-        }
 
         return new AuthResponseDto
         {
             Email = user.Email,
             Role = user.Role?.RoleName ?? "User",
-            Token = string.Empty
+            Token = token
         };
     }
-    public async Task<int> GetUserCountAsync()
+
+public async Task<AuthResponseDto> LoginAsync(
+    LoginRequestDto request)
+{
+    var user =
+        await _userRepository.GetByEmailAsync(
+            request.Email);
+
+    if (user == null)
     {
-        return await _userRepository.GetUserCountAsync();
+        throw new Exception(
+            "Invalid email or password.");
     }
+
+    var passwordValid =
+        PasswordHasher.VerifyPassword(
+            request.Password,
+            user.PasswordHash);
+
+    if (!passwordValid)
+    {
+        throw new Exception(
+            "Invalid email or password.");
+    }
+
+    var token =
+        JwtTokenGenerator.GenerateToken(
+            user,
+            _jwtSettings);
+
+    return new AuthResponseDto
+    {
+        Email = user.Email,
+        Role = user.Role?.RoleName ?? "User",
+        Token = token
+    };
+}
+
+public async Task<int> GetUserCountAsync()
+{
+    return await _userRepository.GetUserCountAsync();
+}
 }

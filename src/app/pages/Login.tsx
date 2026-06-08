@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
@@ -16,6 +17,7 @@ import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import axios from "axios";
 
 const features = [
   "Batch Tracking",
@@ -38,10 +40,73 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = (event: React.FormEvent) => {
-    event.preventDefault();
+const handleLogin = async (
+  event: React.FormEvent
+) => {
+  event.preventDefault();
+
+  // Email Required
+  if (!email.trim()) {
+    alert("Email is required");
+    return;
+  }
+
+  // Email Format Validation
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    alert("Please enter a valid email address");
+    return;
+  }
+
+  // Password Required
+  if (!password.trim()) {
+    alert("Password is required");
+    return;
+  }
+
+  // Password Length Validation
+  if (password.length < 6) {
+    alert(
+      "Password must be at least 6 characters"
+    );
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      "http://localhost:5298/api/Auth/login",
+      {
+        email,
+        password,
+      }
+    );
+
+    localStorage.setItem(
+      "token",
+      response.data.token
+    );
+
+    localStorage.setItem(
+      "email",
+      response.data.email
+    );
+
+    localStorage.setItem(
+      "role",
+      response.data.role
+    );
+
     navigate("/");
-  };
+  }
+  catch (error)
+  {
+    console.error(error);
+
+    alert("Invalid Email or Password");
+  }
+};
 
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-slate-50">

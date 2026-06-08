@@ -4,8 +4,18 @@ using InventoryManagement.API.Interfaces.Services;
 using InventoryManagement.API.Repositories;
 using InventoryManagement.API.Services;
 using Microsoft.EntityFrameworkCore;
+using InventoryManagement.API.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("Jwt"));
+var jwtSettings =
+    builder.Configuration
+        .GetSection("Jwt")
+        .Get<JwtSettings>();
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -13,7 +23,29 @@ builder.Services.AddControllers();
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAuthentication(
+    JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
 
+                ValidIssuer = jwtSettings!.Issuer,
+                ValidAudience = jwtSettings.Audience,
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            jwtSettings.Key))
+            };
+    });
+
+builder.Services.AddAuthorization();
 // Database Connection
 builder.Services.AddDbContext<InventoryDbContext>(options =>
     options.UseSqlServer(
@@ -34,7 +66,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Map Controller Routes
+app.UseAuthentication();
+
+app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

@@ -52,7 +52,33 @@ public class AuthService : IAuthService
     public async Task<AuthResponseDto> LoginAsync(
         LoginRequestDto request)
     {
-        throw new NotImplementedException();
+        var user =
+            await _userRepository.GetByEmailAsync(
+                request.Email);
+
+        if (user == null)
+        {
+            throw new Exception(
+                "Invalid email or password.");
+        }
+
+        var passwordValid =
+            PasswordHasher.VerifyPassword(
+                request.Password,
+                user.PasswordHash);
+
+        if (!passwordValid)
+        {
+            throw new Exception(
+                "Invalid email or password.");
+        }
+
+        return new AuthResponseDto
+        {
+            Email = user.Email,
+            Role = user.Role?.RoleName ?? "User",
+            Token = string.Empty
+        };
     }
     public async Task<int> GetUserCountAsync()
     {

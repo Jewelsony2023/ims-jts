@@ -13,7 +13,7 @@ import { StockOut } from "./pages/StockOut";
 import { Inventory } from "./pages/Inventory";
 import { AuditLogs } from "./pages/AuditLogs";
 import { UserManagement } from "./pages/UserManagement";
-import { MainLayout } from "./components/MainLayout";
+import { MainLayout } from "./components/layout/MainLayout";
 
 export const router = createBrowserRouter([
   { path: "/login", Component: Login },

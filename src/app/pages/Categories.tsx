@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -13,95 +14,41 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 
-const categories = [
-  {
-    id: "1",
-    name: "Antibiotics",
-    description: "Pharmaceutical antibiotics and antimicrobial medications",
-    productCount: 45,
-    color: "bg-blue-500",
-  },
-  {
-    id: "2",
-    name: "Pain Relief",
-    description: "Analgesics and pain management medications",
-    productCount: 67,
-    color: "bg-purple-500",
-  },
-  {
-    id: "3",
-    name: "Diabetes",
-    description: "Insulin and diabetes management products",
-    productCount: 28,
-    color: "bg-pink-500",
-  },
-  {
-    id: "4",
-    name: "PPE",
-    description: "Personal Protective Equipment",
-    productCount: 89,
-    color: "bg-orange-500",
-  },
-  {
-    id: "5",
-    name: "Hygiene",
-    description: "Sanitizers, soaps, and hygiene products",
-    productCount: 124,
-    color: "bg-teal-500",
-  },
-  {
-    id: "6",
-    name: "Vitamins",
-    description: "Vitamins and nutritional supplements",
-    productCount: 156,
-    color: "bg-yellow-500",
-  },
-  {
-    id: "7",
-    name: "Beverages",
-    description: "Juices, drinks, and beverage products",
-    productCount: 234,
-    color: "bg-green-500",
-  },
-  {
-    id: "8",
-    name: "Dairy",
-    description: "Milk, yogurt, cheese, and dairy products",
-    productCount: 178,
-    color: "bg-indigo-500",
-  },
-  {
-    id: "9",
-    name: "Surgical Supplies",
-    description: "Surgical instruments and medical supplies",
-    productCount: 93,
-    color: "bg-red-500",
-  },
-  {
-    id: "10",
-    name: "Baby Care",
-    description: "Baby food, diapers, and care products",
-    productCount: 145,
-    color: "bg-cyan-500",
-  },
-  {
-    id: "11",
-    name: "Cosmetics",
-    description: "Beauty and cosmetic products",
-    productCount: 201,
-    color: "bg-fuchsia-500",
-  },
-  {
-    id: "12",
-    name: "First Aid",
-    description: "First aid kits and emergency supplies",
-    productCount: 76,
-    color: "bg-amber-500",
-  },
-];
+type Category = {
+  id: number;
+  name: string;
+  description: string;
+  productCount: number;
+  color: string;
+};
 
 export function Categories() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const totalProducts = categories.reduce(
+    (total, category) => total + category.productCount,
+    0,
+  );
+  const averageProducts =
+    categories.length === 0 ? 0 : Math.round(totalProducts / categories.length);
+  const largestCategory = categories.reduce(
+    (largest, category) => Math.max(largest, category.productCount),
+    0,
+  );
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const response = await axios.get<Category[]>(
+        `${import.meta.env.VITE_API_URL}/api/categories`,
+      );
+
+      setCategories(response.data);
+    };
+
+    fetchCategories().catch((error) => {
+      console.error(error);
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -176,7 +123,9 @@ export function Categories() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Total Products</p>
-                <h3 className="text-3xl font-bold text-slate-800">1,436</h3>
+                <h3 className="text-3xl font-bold text-slate-800">
+                  {totalProducts.toLocaleString()}
+                </h3>
               </div>
               <div className="bg-emerald-500 p-3 rounded-lg">
                 <Package className="w-6 h-6 text-white" />
@@ -190,7 +139,9 @@ export function Categories() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Avg per Category</p>
-                <h3 className="text-3xl font-bold text-slate-800">120</h3>
+                <h3 className="text-3xl font-bold text-slate-800">
+                  {averageProducts.toLocaleString()}
+                </h3>
               </div>
               <div className="bg-purple-500 p-3 rounded-lg">
                 <Package className="w-6 h-6 text-white" />
@@ -204,7 +155,9 @@ export function Categories() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Largest Category</p>
-                <h3 className="text-3xl font-bold text-slate-800">234</h3>
+                <h3 className="text-3xl font-bold text-slate-800">
+                  {largestCategory.toLocaleString()}
+                </h3>
               </div>
               <div className="bg-orange-500 p-3 rounded-lg">
                 <Package className="w-6 h-6 text-white" />

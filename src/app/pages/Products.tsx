@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import axios from "axios";
 import { Plus, Search, Filter, Edit, Trash2, Eye, Upload } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -31,100 +32,36 @@ import {
 import { Label } from "../components/ui/label";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
-const products = [
-  {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&h=100&fit=crop",
-    name: "Amoxicillin 500mg",
-    sku: "MED-001",
-    barcode: "8901234567890",
-    category: "Antibiotics",
-    description: "Broad-spectrum antibiotic capsule for prescription inventory.",
-    stock: 450,
-    status: "In Stock",
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&h=100&fit=crop",
-    name: "Paracetamol 500mg",
-    sku: "MED-002",
-    barcode: "8901234567891",
-    category: "Pain Relief",
-    description: "Pain relief and fever medicine.",
-    stock: 890,
-    status: "In Stock",
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1550572017-4814c5a3f8e4?w=100&h=100&fit=crop",
-    name: "Insulin Vials",
-    sku: "MED-003",
-    barcode: "8901234567892",
-    category: "Diabetes",
-    description: "Cold-chain insulin vial inventory.",
-    stock: 180,
-    status: "In Stock",
-  },
-  {
-    id: "4",
-    image: "https://images.unsplash.com/photo-1582719366531-3f7e0eccd93a?w=100&h=100&fit=crop",
-    name: "Surgical Masks (Box)",
-    sku: "PPE-001",
-    barcode: "8901234567893",
-    category: "PPE",
-    description: "Disposable protective masks box.",
-    stock: 45,
-    status: "Low Stock",
-  },
-  {
-    id: "5",
-    image: "https://images.unsplash.com/photo-1584589167171-541ce45f1eea?w=100&h=100&fit=crop",
-    name: "Hand Sanitizer 500ml",
-    sku: "HYG-001",
-    barcode: "8901234567894",
-    category: "Hygiene",
-    description: "Alcohol-based hand sanitizer bottle.",
-    stock: 320,
-    status: "In Stock",
-  },
-  {
-    id: "6",
-    image: "https://images.unsplash.com/photo-1571769267292-a9089022f7f6?w=100&h=100&fit=crop",
-    name: "Vitamin C Tablets",
-    sku: "VIT-001",
-    barcode: "8901234567895",
-    category: "Vitamins",
-    description: "Vitamin supplement tablets.",
-    stock: 12,
-    status: "Expiring Soon",
-  },
-  {
-    id: "7",
-    image: "https://images.unsplash.com/photo-1505575967455-8e8f83e8511f?w=100&h=100&fit=crop",
-    name: "Organic Apple Juice 1L",
-    sku: "BEV-001",
-    barcode: "8901234567896",
-    category: "Beverages",
-    description: "Packaged organic apple juice.",
-    stock: 245,
-    status: "In Stock",
-  },
-  {
-    id: "8",
-    image: "",
-    name: "Fresh Yogurt Strawberry",
-    sku: "DAI-001",
-    barcode: "8901234567897",
-    category: "Dairy",
-    description: "Fresh strawberry yogurt.",
-    stock: 0,
-    status: "Expired",
-  },
-];
+type Product = {
+  id: number;
+  image: string;
+  name: string;
+  sku: string;
+  barcode: string;
+  category: string;
+  description: string;
+  stock: number;
+  status: string;
+};
 
 export function Products() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const response = await axios.get<Product[]>(
+        `${import.meta.env.VITE_API_URL}/api/products`,
+      );
+
+      setProducts(response.data);
+    };
+
+    fetchProducts().catch((error) => {
+      console.error(error);
+    });
+  }, []);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Bell, LogOut, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -18,6 +18,7 @@ type HeaderProps = {
 
 export function Header({ onToggleMenu }: HeaderProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const flatItems = navItems.flatMap((item) =>
     item.children ? [item, ...item.children] : [item],
@@ -26,6 +27,13 @@ export function Header({ onToggleMenu }: HeaderProps) {
     flatItems.find((item) => item.path === location.pathname)?.label ||
     (location.pathname.startsWith("/products/") ? "Product Details" : "") ||
     "Dashboard";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white shadow-sm">
@@ -71,18 +79,12 @@ export function Header({ onToggleMenu }: HeaderProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/profile">Profile Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings">Preferences</Link>
-              </DropdownMenuItem>
+              <DropdownMenuItem>My Profile</DropdownMenuItem>
+              <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/login" className="flex items-center gap-2">
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </Link>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

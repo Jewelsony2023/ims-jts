@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Clock,
@@ -7,8 +8,10 @@ import {
   TrendingDown,
   TrendingUp,
   Truck,
+  Users,
   XCircle,
 } from "lucide-react";
+import axios from "axios";
 import {
   Bar,
   BarChart,
@@ -73,11 +76,66 @@ const activityFeed = [
   { type: "Recent Stock In", entity: "Invoice INV002", detail: "Insulin Vials, Surgical Masks", tone: "emerald" },
 ];
 
+type DashboardStats = {
+  totalUsers: number;
+  totalProducts: number;
+  totalSuppliers: number;
+  lowStockItems: number;
+};
+
 export function Dashboard() {
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalProducts: 0,
+    totalSuppliers: 0,
+    lowStockItems: 0,
+  });
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      const response = await axios.get<DashboardStats>(
+        `${import.meta.env.VITE_API_URL}/api/dashboard/stats`,
+      );
+
+      setDashboardStats(response.data);
+    };
+
+    fetchDashboardStats().catch((error) => {
+      console.error(error);
+    });
+  }, []);
+
+  const dashboardKpiData = kpiData.map((kpi) => {
+    if (kpi.title === "Total Products") {
+      return { ...kpi, value: dashboardStats.totalProducts.toLocaleString() };
+    }
+
+    if (kpi.title === "Total Suppliers") {
+      return { ...kpi, value: dashboardStats.totalSuppliers.toLocaleString() };
+    }
+
+    if (kpi.title === "Total Purchase Orders") {
+      return {
+        ...kpi,
+        title: "Total Users",
+        value: dashboardStats.totalUsers.toLocaleString(),
+        icon: Users,
+      };
+    }
+
+    return kpi;
+  });
+
+  const dashboardAlerts = alerts.map((alert) =>
+    alert.title === "Low Stock Products"
+      ? { ...alert, count: dashboardStats.lowStockItems }
+      : alert,
+  );
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {kpiData.map((kpi) => {
+        {dashboardKpiData.map((kpi) => {
           const Icon = kpi.icon;
           return (
             <Card key={kpi.title} className="border-none shadow-md">
@@ -99,7 +157,7 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {alerts.map((alert) => {
+        {dashboardAlerts.map((alert) => {
           const Icon = alert.icon;
           return (
             <Card key={alert.title} className={`border-none border-l-4 ${alert.color} shadow-md`}>

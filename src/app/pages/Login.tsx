@@ -39,15 +39,23 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
 const handleLogin = async (
   event: React.FormEvent
 ) => {
   event.preventDefault();
 
+  // Clear previous errors
+  setEmailError("");
+  setPasswordError("");
+  setSubmitError("");
+
   // Email Required
   if (!email.trim()) {
-    alert("Email is required");
+    setEmailError("Email is required");
     return;
   }
 
@@ -56,27 +64,25 @@ const handleLogin = async (
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
-    alert("Please enter a valid email address");
+    setEmailError("Please enter a valid email address");
     return;
   }
 
   // Password Required
   if (!password.trim()) {
-    alert("Password is required");
+    setPasswordError("Password is required");
     return;
   }
 
   // Password Length Validation
   if (password.length < 6) {
-    alert(
-      "Password must be at least 6 characters"
-    );
+    setPasswordError("Password must be at least 6 characters");
     return;
   }
 
   try {
     const response = await axios.post(
-      "http://localhost:5298/api/Auth/login",
+      `${import.meta.env.VITE_API_URL}/api/Auth/login`,
       {
         email,
         password,
@@ -103,8 +109,7 @@ const handleLogin = async (
   catch (error)
   {
     console.error(error);
-
-    alert("Invalid Email or Password");
+    setSubmitError("Invalid Email or Password");
   }
 };
 
@@ -255,6 +260,7 @@ const handleLogin = async (
                   required
                 />
               </div>
+              {emailError && <p className="text-sm text-red-500">{emailError}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -280,6 +286,7 @@ const handleLogin = async (
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
             </div>
 
             <div className="flex items-center justify-between">
@@ -301,6 +308,7 @@ const handleLogin = async (
             <Button type="submit" className="h-11 w-full bg-teal-600 font-semibold text-white shadow-sm hover:bg-teal-700">
               Sign In
             </Button>
+            {submitError && <p className="mt-4 text-sm text-red-500">{submitError}</p>}
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">

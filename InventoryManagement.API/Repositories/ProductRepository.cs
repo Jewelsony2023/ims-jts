@@ -27,6 +27,43 @@ public class ProductRepository : IProductRepository
             .FirstOrDefaultAsync(product => product.Id == id);
     }
 
+    public Task<List<ProductOptionDto>> GetProductOptionsAsync()
+    {
+        return _context.Products
+            .AsNoTracking()
+            .Where(product => product.IsActive && product.DeletedAt == null)
+            .Select(product => new ProductOptionDto
+            {
+                Id = product.ProductId,
+                Name = product.ProductName
+            })
+            .OrderBy(product => product.Name)
+            .ToListAsync();
+    }
+
+    public Task<List<ProductBatchDto>> GetProductBatchesAsync()
+    {
+        return _context.ProductBatches
+            .AsNoTracking()
+            .Where(pb => pb.Product != null && pb.Supplier != null)
+            .Select(pb => new ProductBatchDto
+            {
+                ProductBatchId = pb.ProductBatchId,
+                ProductId = pb.ProductId,
+                ProductName = pb.Product!.ProductName,
+                ProductImageUrl = pb.Product.ProductImageUrl ?? string.Empty,
+                SKU = pb.Product.SKU,
+                BatchNumber = pb.BatchNumber,
+                QuantityAvailable = pb.QuantityAvailable,
+                CostPrice = pb.CostPrice,
+                SellingPrice = pb.SellingPrice,
+                ExpiryDate = pb.ExpiryDate,
+                SupplierId = pb.SupplierId,
+                SupplierName = pb.Supplier!.SupplierName
+            })
+            .ToListAsync();
+    }
+
     private IQueryable<ProductDto> BuildProductQuery()
     {
         var today = DateTime.UtcNow.Date;

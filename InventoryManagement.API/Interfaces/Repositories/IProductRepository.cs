@@ -7,4 +7,8 @@ public interface IProductRepository
     Task<List<ProductDto>> GetProductsAsync();
 
     Task<ProductDto?> GetProductByIdAsync(int id);
+
+    Task<List<ProductOptionDto>> GetProductOptionsAsync();
+
+    Task<List<ProductBatchDto>> GetProductBatchesAsync();
 }

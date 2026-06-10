@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Search, Filter, Download } from "lucide-react";
+import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -20,125 +22,42 @@ import {
 } from "../components/ui/select";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
-const inventory = [
-  {
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&h=100&fit=crop",
-    product: "Amoxicillin 500mg",
-    sku: "MED-001",
-    batch: "BAT-2401",
-    quantity: 450,
-    costPrice: 45,
-    expiry: "2027-05-15",
-    daysRemaining: 346,
-    status: "Good",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&h=100&fit=crop",
-    product: "Paracetamol 500mg",
-    sku: "MED-002",
-    batch: "BAT-2402",
-    quantity: 890,
-    costPrice: 52,
-    expiry: "2027-04-20",
-    daysRemaining: 321,
-    status: "Good",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1550572017-4814c5a3f8e4?w=100&h=100&fit=crop",
-    product: "Insulin Vials",
-    sku: "MED-003",
-    batch: "BAT-2403",
-    quantity: 180,
-    costPrice: 45.0,
-    expiry: "2027-03-10",
-    daysRemaining: 280,
-    status: "Good",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1582719366531-3f7e0eccd93a?w=100&h=100&fit=crop",
-    product: "Surgical Masks",
-    sku: "PPE-001",
-    batch: "BAT-2404",
-    quantity: 45,
-    costPrice: 8.5,
-    expiry: "2028-01-20",
-    daysRemaining: 596,
-    status: "Low Stock",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1584589167171-541ce45f1eea?w=100&h=100&fit=crop",
-    product: "Hand Sanitizer 500ml",
-    sku: "HYG-001",
-    batch: "BAT-2405",
-    quantity: 320,
-    costPrice: 3.25,
-    expiry: "2026-12-15",
-    daysRemaining: 195,
-    status: "Good",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1571769267292-a9089022f7f6?w=100&h=100&fit=crop",
-    product: "Vitamin C Tablets",
-    sku: "VIT-001",
-    batch: "BAT-2406",
-    quantity: 12,
-    costPrice: 7.5,
-    expiry: "2026-06-20",
-    daysRemaining: 17,
-    status: "Expiring Soon",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1505575967455-8e8f83e8511f?w=100&h=100&fit=crop",
-    product: "Organic Apple Juice",
-    sku: "BEV-001",
-    batch: "BAT-2407",
-    quantity: 245,
-    costPrice: 2.75,
-    expiry: "2026-08-10",
-    daysRemaining: 68,
-    status: "Good",
-  },
-  {
-    image: "",
-    product: "Fresh Yogurt Strawberry",
-    sku: "DAI-001",
-    batch: "BAT-2408",
-    quantity: 0,
-    costPrice: 1.85,
-    expiry: "2026-05-28",
-    daysRemaining: -6,
-    status: "Expired",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&h=100&fit=crop",
-    product: "Aspirin 100mg",
-    sku: "MED-004",
-    batch: "BAT-2409",
-    quantity: 35,
-    costPrice: 4.25,
-    expiry: "2027-02-15",
-    daysRemaining: 257,
-    status: "Low Stock",
-  },
-  {
-    image: "",
-    product: "Bandages Sterile",
-    sku: "MED-005",
-    batch: "BAT-2410",
-    quantity: 520,
-    costPrice: 1.2,
-    expiry: "2028-06-30",
-    daysRemaining: 757,
-    status: "Good",
-  },
-];
+type InventoryItem = {
+  productBatchId: number;
+  product: string;
+  productImageUrl: string;
+  sku: string;
+  batch: string;
+  quantity: number;
+  costPrice: number;
+  expiry: string;
+  daysRemaining: number;
+  status: string;
+};
 
 export function Inventory() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      const response = await axios.get<InventoryItem[]>(
+        `${import.meta.env.VITE_API_URL}/api/stocktransactions/inventory`,
+      );
+      setInventory(response.data);
+    };
+
+    fetchInventory().catch((error) => {
+      console.error(error);
+    });
+  }, []);
+
   const inventoryValue = inventory.reduce(
     (total, item) => total + item.quantity * item.costPrice,
     0,
   );
+
   const getStatusBadge = (status: string) => {
+    const today = new Date().getDate();
     switch (status) {
       case "Good":
         return <Badge className="bg-emerald-100 text-emerald-700">Good</Badge>;
@@ -262,18 +181,18 @@ export function Inventory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventory.map((item, index) => (
-                <TableRow key={index}>
+              {inventory.map((item) => (
+                <TableRow key={item.productBatchId}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <ImageWithFallback
-                        src={item.image || "missing-product-image"}
+                        src={item.productImageUrl || "missing-product-image"}
                         alt={item.product}
                         className="h-10 w-10 rounded-lg object-cover bg-slate-100"
                       />
                       <div>
                         <p className="font-medium">{item.product}</p>
-                        {!item.image && (
+                        {!item.productImageUrl && (
                           <p className="text-xs text-slate-500">Placeholder</p>
                         )}
                       </div>
@@ -303,8 +222,8 @@ export function Inventory() {
                         item.daysRemaining < 0
                           ? "font-semibold text-red-600"
                           : item.daysRemaining < 30
-                          ? "font-semibold text-orange-600"
-                          : "text-slate-800"
+                            ? "font-semibold text-orange-600"
+                            : "text-slate-800"
                       }
                     >
                       {item.daysRemaining < 0

@@ -1,3 +1,4 @@
+using InventoryManagement.API.DTOs;
 using InventoryManagement.API.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,5 +34,19 @@ public class ProductsController : ControllerBase
         }
 
         return Ok(product);
+    }
+
+    [HttpGet("options")]
+    public async Task<IActionResult> GetProductOptions()
+    {
+        var options = await _productService.GetProductOptionsAsync();
+        return Ok(options);
+    }
+
+    [HttpGet("batches")]
+    public async Task<IActionResult> GetProductBatches()
+    {
+        var batches = await _productService.GetProductBatchesAsync();
+        return Ok(batches);
     }
 }

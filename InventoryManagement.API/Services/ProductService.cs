@@ -22,4 +22,14 @@ public class ProductService : IProductService
     {
         return _productRepository.GetProductByIdAsync(id);
     }
+
+    public Task<List<ProductOptionDto>> GetProductOptionsAsync()
+    {
+        return _productRepository.GetProductOptionsAsync();
+    }
+
+    public Task<List<ProductBatchDto>> GetProductBatchesAsync()
+    {
+        return _productRepository.GetProductBatchesAsync();
+    }
 }

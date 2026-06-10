@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
+import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -22,6 +23,8 @@ import {
 
 interface StockOutRow {
   id: number;
+  productId: number;
+  productBatchId: number;
   product: string;
   batch: string;
   availableQuantity: number;
@@ -31,31 +34,73 @@ interface StockOutRow {
   quantityToIssue: string;
 }
 
-const batchOptions = [
-  { product: "Paracetamol 500mg", batch: "BAT-2402", available: 890, costPrice: 45, sellingPrice: 55 },
-  { product: "Vitamin C Tablets", batch: "BAT-2406", available: 12, costPrice: 52, sellingPrice: 55 },
-  { product: "Surgical Masks", batch: "BAT-2404", available: 45, costPrice: 8.5, sellingPrice: 14.99 },
-  { product: "Hand Sanitizer 500ml", batch: "BAT-2405", available: 320, costPrice: 3.25, sellingPrice: 6.99 },
-];
+type ProductBatchOption = {
+  productBatchId: number;
+  productId: number;
+  productName: string;
+  productImageUrl: string;
+  sku: string;
+  batchNumber: string;
+  quantityAvailable: number;
+  costPrice: number;
+  sellingPrice: number;
+  expiryDate: string;
+  supplierId: number;
+  supplierName: string;
+};
 
 const createRow = (id: number): StockOutRow => ({
   id,
+  productId: 0,
+  productBatchId: 0,
   product: "",
   batch: "",
   availableQuantity: 0,
   batchCostPrice: 0,
   batchSellingPrice: 0,
   transactionSellingPrice: "",
-  quantityToIssue: "",
+  quantityToIssue: ""
 });
 
 export function StockOut() {
   const [rows, setRows] = useState<StockOutRow[]>([createRow(1), createRow(2)]);
+  const [batchOptions, setBatchOptions] = useState<ProductBatchOption[]>([]);
+
+  useEffect(() => {
+    const fetchBatchData = async () => {
+      const response = await axios.get<ProductBatchOption[]>(
+        `${import.meta.env.VITE_API_URL}/api/products/batches`,
+      );
+      setBatchOptions(response.data);
+    };
+    fetchBatchData().catch(console.error);
+  }, []);
 
   const updateRow = (id: number, key: keyof StockOutRow, value: string | number) => {
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
     );
+  };
+
+  const handleSubmit = async () => {
+    const requestData = {
+      ReferenceNumber: (document.getElementById("reference") as HTMLInputElement)?.value || undefined,
+      IssuedTo: (document.getElementById("issuedTo") as HTMLInputElement)?.value || undefined,
+      Items: rows
+        .filter(row => row.productBatchId > 0 && row.quantityToIssue)
+        .map(row => ({
+          ProductId: row.productId,
+          ProductBatchId: row.productBatchId,
+          Quantity: parseInt(row.quantityToIssue) || 0,
+          SellingPrice: parseFloat(row.transactionSellingPrice) || row.batchSellingPrice
+        }))
+    };
+
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-out`, requestData);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -105,12 +150,22 @@ export function StockOut() {
                 {rows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
-                      <Select value={row.product} onValueChange={(value) => updateRow(row.id, "product", value)}>
+                      <Select value={row.product} onValueChange={(value) => {
+                        const selected = batchOptions.find((item) => item.productName === value);
+                        updateRow(row.id, "product", value);
+                        updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
+                        updateRow(row.id, "batch", selected?.batchNumber ?? "");
+                        updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
+                        updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
+                        updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
+                        updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
+                        updateRow(row.id, "productId", selected?.productId ?? 0);
+                      }}>
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          {[...new Set(batchOptions.map((item) => item.product))].map((product) => (
+                          {[...new Set(batchOptions.map((item) => item.productName))].map((product) => (
                             <SelectItem key={product} value={product}>{product}</SelectItem>
                           ))}
                         </SelectContent>
@@ -120,12 +175,14 @@ export function StockOut() {
                       <Select
                         value={row.batch}
                         onValueChange={(value) => {
-                          const selected = batchOptions.find((item) => item.batch === value);
+                          const selected = batchOptions.find((item) => item.batchNumber === value);
                           updateRow(row.id, "batch", value);
-                          updateRow(row.id, "availableQuantity", selected?.available ?? 0);
+                          updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
+                          updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
                           updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
                           updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
                           updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
+                          updateRow(row.id, "productId", selected?.productId ?? 0);
                         }}
                       >
                         <SelectTrigger className="bg-white">
@@ -133,9 +190,9 @@ export function StockOut() {
                         </SelectTrigger>
                         <SelectContent>
                           {batchOptions
-                            .filter((item) => !row.product || item.product === row.product)
+                            .filter((item) => !row.product || item.productName === row.product)
                             .map((item) => (
-                              <SelectItem key={item.batch} value={item.batch}>{item.batch}</SelectItem>
+                              <SelectItem key={item.batchNumber} value={item.batchNumber}>{item.batchNumber}</SelectItem>
                             ))}
                         </SelectContent>
                       </Select>
@@ -167,7 +224,7 @@ export function StockOut() {
               <Plus className="h-4 w-4" />
               Add Row
             </Button>
-            <Button className="bg-orange-500 hover:bg-orange-600">
+            <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleSubmit}>
               <Save className="h-4 w-4" />
               Submit Transaction
             </Button>

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
+import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -22,42 +23,96 @@ import {
 
 interface StockInRow {
   id: number;
-  product: string;
+  productId: number;
+  productBatchId: number | null;
+  productName: string;
   batchNumber: string;
   manufactureDate: string;
   expiryDate: string;
   quantity: string;
   costPrice: string;
   sellingPrice: string;
-  supplier: string;
+  supplierId: number;
+  supplierName: string;
 }
 
-const products = ["Paracetamol 500mg", "Vitamin C Tablets", "Aspirin 100mg", "Surgical Masks", "Insulin Vials"];
-const suppliers = ["MediPharm Solutions Ltd.", "HealthCare Distributors Inc.", "Global Medical Supplies", "FreshFood Wholesalers"];
+type ProductOption = {
+  id: number;
+  name: string;
+};
+
+type SupplierOption = {
+  id: number;
+  name: string;
+};
 
 const createRow = (id: number): StockInRow => ({
   id,
-  product: "",
+  productId: 0,
+  productBatchId: null,
+  productName: "",
   batchNumber: "",
   manufactureDate: "",
   expiryDate: "",
   quantity: "",
   costPrice: "",
   sellingPrice: "",
-  supplier: "",
+  supplierId: 0,
+  supplierName: ""
 });
 
 export function StockIn() {
   const [rows, setRows] = useState<StockInRow[]>([createRow(1), createRow(2)]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
 
-  const updateRow = (id: number, key: keyof StockInRow, value: string) => {
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      const [productsRes, suppliersRes] = await Promise.all([
+        axios.get<ProductOption[]>(`${import.meta.env.VITE_API_URL}/api/products/options`),
+        axios.get<SupplierOption[]>(`${import.meta.env.VITE_API_URL}/api/suppliers`)
+      ]);
+      setProducts(productsRes.data);
+      setSuppliers(suppliersRes.data);
+    };
+    fetchDropdownData().catch(console.error);
+  }, []);
+
+  const updateRow = (id: number, key: keyof StockInRow, value: string | number | null) => {
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
     );
   };
 
+  const handleSubmit = async () => {
+    const requestData = {
+      InvoiceNumber: (document.getElementById("invoice") as HTMLInputElement)?.value || "",
+      Notes: (document.getElementById("notes") as HTMLInputElement)?.value || undefined,
+      Items: rows
+        .filter(row => row.productId > 0 && row.quantity)
+        .map(row => ({
+          ProductId: row.productId,
+          ProductBatchId: row.productBatchId,
+          Quantity: parseInt(row.quantity) || 0,
+          BatchNumber: row.batchNumber,
+          ManufactureDate: row.manufactureDate ? new Date(row.manufactureDate).toISOString() : new Date().toISOString(),
+          ExpiryDate: row.expiryDate ? new Date(row.expiryDate).toISOString() : new Date().toISOString(),
+          CostPrice: parseFloat(row.costPrice) || 0,
+          SellingPrice: parseFloat(row.sellingPrice) || 0,
+          SupplierId: row.supplierId
+        }))
+    };
+
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-in`, requestData);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Stock In</h1>
         <p className="mt-1 text-slate-600">
@@ -104,13 +159,13 @@ export function StockIn() {
                 {rows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
-                      <Select value={row.product} onValueChange={(value) => updateRow(row.id, "product", value)}>
+                      <Select value={row.productId.toString()} onValueChange={(value) => updateRow(row.id, "productId", parseInt(value))}>
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
                           {products.map((product) => (
-                            <SelectItem key={product} value={product}>{product}</SelectItem>
+                            <SelectItem key={product.id.toString()} value={product.id.toString()}>{product.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -134,13 +189,13 @@ export function StockIn() {
                       <Input type="number" step="0.01" value={row.sellingPrice} onChange={(event) => updateRow(row.id, "sellingPrice", event.target.value)} className="bg-white" />
                     </TableCell>
                     <TableCell>
-                      <Select value={row.supplier} onValueChange={(value) => updateRow(row.id, "supplier", value)}>
+                      <Select value={row.supplierId.toString()} onValueChange={(value) => updateRow(row.id, "supplierId", parseInt(value))}>
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select supplier" />
                         </SelectTrigger>
                         <SelectContent>
                           {suppliers.map((supplier) => (
-                            <SelectItem key={supplier} value={supplier}>{supplier}</SelectItem>
+                            <SelectItem key={supplier.id.toString()} value={supplier.id.toString()}>{supplier.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -161,7 +216,7 @@ export function StockIn() {
               <Plus className="h-4 w-4" />
               Add Row
             </Button>
-            <Button className="bg-emerald-500 hover:bg-emerald-600">
+            <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={handleSubmit}>
               <Save className="h-4 w-4" />
               Submit Transaction
             </Button>

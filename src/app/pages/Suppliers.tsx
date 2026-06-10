@@ -1,105 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Mail, Phone, MapPin, Package, Edit, Trash2, Star, Clock, CheckCircle2 } from "lucide-react";
+import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
-const suppliers = [
-  {
-    id: "1",
-    name: "MediPharm Solutions Ltd.",
-    contact: "Robert Williams",
-    email: "robert@medipharm.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Medical Plaza, New York, NY 10001",
-    productsSupplied: 145,
-    linkedProducts: "Antibiotics, Pain Relief, Diabetes",
-    leadTime: "4.2 days",
-    onTimeRate: "96%",
-    defectRate: "0.8%",
-    status: "Active",
-    rating: 4.8,
-  },
-  {
-    id: "2",
-    name: "HealthCare Distributors Inc.",
-    contact: "Sarah Johnson",
-    email: "sarah@healthcare-dist.com",
-    phone: "+1 (555) 234-5678",
-    address: "456 Healthcare Ave, Los Angeles, CA 90001",
-    productsSupplied: 98,
-    linkedProducts: "PPE, Hygiene, Surgical Supplies",
-    leadTime: "5.1 days",
-    onTimeRate: "93%",
-    defectRate: "1.1%",
-    status: "Active",
-    rating: 4.6,
-  },
-  {
-    id: "3",
-    name: "Global Medical Supplies",
-    contact: "Michael Chen",
-    email: "michael@globalmeds.com",
-    phone: "+1 (555) 345-6789",
-    address: "789 Supply Chain Rd, Chicago, IL 60601",
-    productsSupplied: 234,
-    linkedProducts: "Medical Devices, Diagnostics",
-    leadTime: "3.8 days",
-    onTimeRate: "98%",
-    defectRate: "0.5%",
-    status: "Active",
-    rating: 4.9,
-  },
-  {
-    id: "4",
-    name: "FreshFood Wholesalers",
-    contact: "Emma Davis",
-    email: "emma@freshfood.com",
-    phone: "+1 (555) 456-7890",
-    address: "321 Fresh Market St, Houston, TX 77001",
-    productsSupplied: 187,
-    linkedProducts: "Dairy, Beverages, Fresh Foods",
-    leadTime: "2.1 days",
-    onTimeRate: "91%",
-    defectRate: "1.6%",
-    status: "Active",
-    rating: 4.5,
-  },
-  {
-    id: "5",
-    name: "BioTech Pharmaceuticals",
-    contact: "David Lee",
-    email: "david@biotech-pharma.com",
-    phone: "+1 (555) 567-8901",
-    address: "654 Science Park, Boston, MA 02101",
-    productsSupplied: 76,
-    linkedProducts: "Cold Chain, Injectables",
-    leadTime: "7.5 days",
-    onTimeRate: "88%",
-    defectRate: "2.3%",
-    status: "Inactive",
-    rating: 4.3,
-  },
-  {
-    id: "6",
-    name: "PPE Direct Suppliers",
-    contact: "Lisa Anderson",
-    email: "lisa@ppedirect.com",
-    phone: "+1 (555) 678-9012",
-    address: "987 Safety Blvd, Phoenix, AZ 85001",
-    productsSupplied: 123,
-    linkedProducts: "Masks, Gloves, Sanitizers",
-    leadTime: "4.7 days",
-    onTimeRate: "95%",
-    defectRate: "0.9%",
-    status: "Active",
-    rating: 4.7,
-  },
+type Supplier = {
+  id: number;
+  name: string;
+  contact: string;
+  email: string;
+  phone: string;
+  address: string;
+  productsSupplied: number;
+  leadTime: number;
+  status: string;
+  linkedProducts?: string;
+  onTimeRate?: string;
+  defectRate?: string;
+  rating?: number;
+};
+
+const linkedProducts = [
+  "Antibiotics, Pain Relief, Diabetes",
+  "PPE, Hygiene, Surgical Supplies",
+  "Medical Devices, Diagnostics",
+  "Dairy, Beverages, Fresh Foods",
+  "Cold Chain, Injectables",
+  "Masks, Gloves, Sanitizers"
 ];
 
+const onTimeRates = ["96%", "93%", "98%", "91%", "88%", "95%"];
+const defectRates = ["0.8%", "1.1%", "0.5%", "1.6%", "2.3%", "0.9%"];
+const ratings = [4.8, 4.6, 4.9, 4.5, 4.3, 4.7];
+
 export function Suppliers() {
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      const response = await axios.get<Supplier[]>(
+        `${import.meta.env.VITE_API_URL}/api/suppliers`,
+      );
+
+      setSuppliers(response.data);
+    };
+
+    fetchSuppliers().catch((error) => {
+      console.error(error);
+    });
+  }, []);
+
+  const suppliersWithExtras = suppliers.map((supplier, index) => ({
+    ...supplier,
+    linkedProducts: supplier.linkedProducts || linkedProducts[index % linkedProducts.length] || "",
+    leadTime: `${supplier.leadTime} days`,
+    onTimeRate: supplier.onTimeRate || onTimeRates[index % onTimeRates.length] || "0%",
+    defectRate: supplier.defectRate || defectRates[index % defectRates.length] || "0%",
+    rating: supplier.rating ?? ratings[index % ratings.length] ?? 0
+  }));
+
+  const totalProducts = suppliersWithExtras.reduce((sum, s) => sum + s.productsSupplied, 0);
+  const avgRating = suppliersWithExtras.length > 0
+    ? (suppliersWithExtras.reduce((sum, s) => sum + s.rating, 0) / suppliersWithExtras.length).toFixed(1)
+    : "0.0";
 
   return (
     <div className="space-y-6">
@@ -125,7 +90,7 @@ export function Suppliers() {
               <div>
                 <p className="text-sm text-slate-600 mb-1">Total Suppliers</p>
                 <h3 className="text-3xl font-bold text-slate-800">
-                  {suppliers.length}
+                  {suppliersWithExtras.length}
                 </h3>
               </div>
               <div className="bg-blue-500 p-3 rounded-lg">
@@ -141,7 +106,7 @@ export function Suppliers() {
               <div>
                 <p className="text-sm text-slate-600 mb-1">Active Suppliers</p>
                 <h3 className="text-3xl font-bold text-slate-800">
-                  {suppliers.filter((s) => s.status === "Active").length}
+                  {suppliersWithExtras.filter((s) => s.status === "Active").length}
                 </h3>
               </div>
               <div className="bg-emerald-500 p-3 rounded-lg">
@@ -156,7 +121,7 @@ export function Suppliers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Total Products</p>
-                <h3 className="text-3xl font-bold text-slate-800">863</h3>
+                <h3 className="text-3xl font-bold text-slate-800">{totalProducts}</h3>
               </div>
               <div className="bg-purple-500 p-3 rounded-lg">
                 <Package className="w-6 h-6 text-white" />
@@ -170,7 +135,7 @@ export function Suppliers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Avg Rating</p>
-                <h3 className="text-3xl font-bold text-slate-800">4.6</h3>
+                <h3 className="text-3xl font-bold text-slate-800">{avgRating}</h3>
               </div>
               <div className="bg-amber-500 p-3 rounded-lg">
                 <Package className="w-6 h-6 text-white" />
@@ -189,7 +154,7 @@ export function Suppliers() {
 
         <TabsContent value="cards" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {suppliers.map((supplier) => (
+            {suppliersWithExtras.map((supplier) => (
               <Card key={supplier.id} className="border-none shadow-md hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -315,7 +280,7 @@ export function Suppliers() {
                     </tr>
                   </thead>
                   <tbody>
-                    {suppliers.map((supplier) => (
+                    {suppliersWithExtras.map((supplier) => (
                       <tr key={supplier.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="py-4 px-4 font-medium">{supplier.name}</td>
                         <td className="py-4 px-4">{supplier.contact}</td>

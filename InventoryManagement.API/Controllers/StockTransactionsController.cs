@@ -39,6 +39,12 @@ public class StockTransactionsController : ControllerBase
         {
             return Unauthorized();
         }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new { Message = "Validation failed", Errors = ModelState });
+        }
+
         var transactionId = await _stockTransactionService.ProcessStockInAsync(request, userId.Value);
         return Ok(new { TransactionId = transactionId });
     }
@@ -51,6 +57,12 @@ public class StockTransactionsController : ControllerBase
         {
             return Unauthorized();
         }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new { Message = "Validation failed", Errors = ModelState });
+        }
+
         var success = await _stockTransactionService.ProcessStockOutAsync(request, userId.Value);
         if (!success)
         {

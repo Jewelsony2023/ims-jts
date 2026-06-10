@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace InventoryManagement.API.DTOs;
 
 public class StockInItemDto
@@ -12,6 +14,7 @@ public class StockInItemDto
 
     public DateTime ExpiryDate { get; set; }
 
+    [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
     public int Quantity { get; set; }
 
     public decimal CostPrice { get; set; }

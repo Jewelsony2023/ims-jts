@@ -65,6 +65,8 @@ const createRow = (id: number): StockOutRow => ({
 export function StockOut() {
   const [rows, setRows] = useState<StockOutRow[]>([createRow(1), createRow(2)]);
   const [batchOptions, setBatchOptions] = useState<ProductBatchOption[]>([]);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const fetchBatchData = async () => {
@@ -83,6 +85,20 @@ export function StockOut() {
   };
 
   const handleSubmit = async () => {
+    for (const row of rows) {
+      if (
+        Number(row.quantityToIssue) >
+        row.availableQuantity
+      ) {
+        setIsError(true);
+
+        setMessage(
+          `Cannot issue more than available stock for ${row.product}`
+        );
+
+        return;
+      }
+    }
     const requestData = {
       ReferenceNumber: (document.getElementById("reference") as HTMLInputElement)?.value || undefined,
       IssuedTo: (document.getElementById("issuedTo") as HTMLInputElement)?.value || undefined,
@@ -97,9 +113,37 @@ export function StockOut() {
     };
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-out`, requestData);
-    } catch (error) {
+
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-out`,
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsError(false);
+
+      setMessage(
+        "Stock Out completed successfully."
+      );
+
+      console.log(response.data);
+
+    } catch (error: any) {
+
       console.error(error);
+
+      setIsError(true);
+
+      setMessage(
+        error?.response?.data?.message ??
+        "Stock Out failed."
+      );
     }
   };
 
@@ -117,6 +161,17 @@ export function StockOut() {
           <CardTitle className="text-lg">Issue Transaction</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {message && (
+            <div
+              className={`rounded-md p-3 text-sm font-medium ${
+                isError
+                  ? "bg-red-100 text-red-700 border border-red-300"
+                  : "bg-green-100 text-green-700 border border-green-300"
+              }`}
+            >
+              {message}
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="issuedTo">Issued To</Label>
@@ -173,15 +228,26 @@ export function StockOut() {
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={row.batch}
+                        value={
+                          row.productBatchId
+                            ? row.productBatchId.toString()
+                            : ""
+                        }
                         onValueChange={(value) => {
-                          const selected = batchOptions.find((item) => item.batchNumber === value);
-                          updateRow(row.id, "batch", value);
+                          const selected = batchOptions.find(
+                            (item) => item.productBatchId === parseInt(value)
+                          );
+
+                          updateRow(row.id, "batch", selected?.batchNumber ?? "");
                           updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
                           updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
                           updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
                           updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
-                          updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
+                          updateRow(
+                            row.id,
+                            "transactionSellingPrice",
+                            String(selected?.sellingPrice ?? "")
+                          );
                           updateRow(row.id, "productId", selected?.productId ?? 0);
                         }}
                       >
@@ -192,7 +258,12 @@ export function StockOut() {
                           {batchOptions
                             .filter((item) => !row.product || item.productName === row.product)
                             .map((item) => (
-                              <SelectItem key={item.batchNumber} value={item.batchNumber}>{item.batchNumber}</SelectItem>
+                              <SelectItem
+                                key={item.productBatchId}
+                                value={item.productBatchId.toString()}
+                              >
+                                {item.batchNumber}
+                              </SelectItem>
                             ))}
                         </SelectContent>
                       </Select>

@@ -13,7 +13,9 @@ public class StockInItemDto
     public DateTime ManufactureDate { get; set; }
 
     public DateTime ExpiryDate { get; set; }
-
+    /// <summary>
+    /// Business end bug fix
+    /// </summary>
     [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than zero.")]
     public int Quantity { get; set; }
 

@@ -66,6 +66,7 @@ builder.Services.AddAuthentication(
     JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        /// Authorisation fuction
         options.TokenValidationParameters =
             new TokenValidationParameters
             {

@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "../components/ui/table";
 
+
 interface StockInRow {
   id: number;
   productId: number;
@@ -62,6 +63,8 @@ const createRow = (id: number): StockInRow => ({
 });
 
 export function StockIn() {
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [rows, setRows] = useState<StockInRow[]>([createRow(1), createRow(2)]);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
@@ -85,28 +88,76 @@ export function StockIn() {
   };
 
   const handleSubmit = async () => {
+    setMessage("");
+    setIsError(false);
+
     const requestData = {
-      InvoiceNumber: (document.getElementById("invoice") as HTMLInputElement)?.value || "",
-      Notes: (document.getElementById("notes") as HTMLInputElement)?.value || undefined,
+      InvoiceNumber:
+        (document.getElementById("invoice") as HTMLInputElement)?.value || "",
+
+      Notes: undefined,
+
       Items: rows
-        .filter(row => row.productId > 0 && row.quantity)
-        .map(row => ({
+        .filter((row) => row.productId > 0 && row.quantity)
+        .map((row) => ({
           ProductId: row.productId,
           ProductBatchId: row.productBatchId,
           Quantity: parseInt(row.quantity) || 0,
           BatchNumber: row.batchNumber,
-          ManufactureDate: row.manufactureDate ? new Date(row.manufactureDate).toISOString() : new Date().toISOString(),
-          ExpiryDate: row.expiryDate ? new Date(row.expiryDate).toISOString() : new Date().toISOString(),
+          ManufactureDate: row.manufactureDate
+            ? new Date(row.manufactureDate).toISOString()
+            : new Date().toISOString(),
+          ExpiryDate: row.expiryDate
+            ? new Date(row.expiryDate).toISOString()
+            : new Date().toISOString(),
           CostPrice: parseFloat(row.costPrice) || 0,
           SellingPrice: parseFloat(row.sellingPrice) || 0,
-          SupplierId: row.supplierId
-        }))
+          SupplierId: row.supplierId,
+        })),
     };
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-in`, requestData);
-    } catch (error) {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-in`,
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("SUCCESS RESPONSE:", response.data);
+
+      setIsError(false);
+
+      setMessage(
+        `✅ Stock In completed successfully. Transaction ID: ${
+          response.data.transactionId ??
+          response.data.TransactionId ??
+          "Created"
+        }`
+      );
+
+      setRows([createRow(1), createRow(2)]);
+    } catch (error: any) {
       console.error(error);
+
+      setIsError(true);
+
+      if (error?.response?.data?.errors) {
+        setMessage(
+          Object.values(error.response.data.errors)
+            .flat()
+            .join(", ")
+        );
+      } else if (error?.response?.data?.message) {
+        setMessage(error.response.data.message);
+      } else {
+        setMessage("Stock In failed.");
+      }
     }
   };
 
@@ -125,6 +176,17 @@ export function StockIn() {
           <CardTitle className="text-lg">Inbound Transaction</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+        {message && (
+          <div
+            className={`rounded-md border p-3 text-sm font-medium ${
+              isError
+                ? "border-red-300 bg-red-100 text-red-700"
+                : "border-green-300 bg-green-100 text-green-700"
+            }`}
+          >
+            {message}
+          </div>
+        )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="invoice">Invoice Number</Label>

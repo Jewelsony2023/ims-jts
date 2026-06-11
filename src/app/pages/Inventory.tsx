@@ -40,8 +40,15 @@ export function Inventory() {
 
   useEffect(() => {
     const fetchInventory = async () => {
+      const token = localStorage.getItem("token");
+
       const response = await axios.get<InventoryItem[]>(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/inventory`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setInventory(response.data);
     };
@@ -57,7 +64,6 @@ export function Inventory() {
   );
 
   const getStatusBadge = (status: string) => {
-    const today = new Date().getDate();
     switch (status) {
       case "Good":
         return <Badge className="bg-emerald-100 text-emerald-700">Good</Badge>;

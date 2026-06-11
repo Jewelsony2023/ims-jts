@@ -107,7 +107,11 @@ public class StockTransactionRepository : IStockTransactionRepository
                     CostPrice = item.CostPrice,
                     SellingPrice = item.SellingPrice
                 };
+
                 _context.ProductBatches.Add(batch);
+
+                // Save immediately so SQL generates ProductBatchId
+                await _context.SaveChangesAsync();
             }
             else
             {
@@ -124,10 +128,19 @@ public class StockTransactionRepository : IStockTransactionRepository
                 CostPriceAtTransaction = item.CostPrice,
                 SellingPriceAtTransaction = item.SellingPrice
             };
+            Console.WriteLine
+            (
+                $"BatchId={batch.ProductBatchId}, ProductId={item.ProductId}"
+            );
             _context.StockTransactionItems.Add(transactionItem);
+            Console.WriteLine("About to save transaction item");
         }
 
+        Console.WriteLine("Starting final SaveChanges");
+
         await _context.SaveChangesAsync();
+
+        Console.WriteLine("Final SaveChanges completed");
         return header.StockTransactionHeaderId;
     }
 

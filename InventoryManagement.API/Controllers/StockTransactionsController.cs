@@ -39,7 +39,7 @@ public class StockTransactionsController : ControllerBase
         {
             return Unauthorized();
         }
-
+        ///model state validation (controllerbase abstract class)
         if (!ModelState.IsValid)
         {
             return BadRequest(new { Message = "Validation failed", Errors = ModelState });
@@ -57,7 +57,7 @@ public class StockTransactionsController : ControllerBase
         {
             return Unauthorized();
         }
-
+        ///model state validation (controllerbase abstract class)
         if (!ModelState.IsValid)
         {
             return BadRequest(new { Message = "Validation failed", Errors = ModelState });

@@ -84,7 +84,20 @@ export function StockOut() {
     );
   };
 
+
   const handleSubmit = async () => {
+    const selectedBatches = rows
+      .filter(r => r.productBatchId > 0)
+      .map(r => r.productBatchId);
+
+    if (
+      selectedBatches.length !==
+      new Set(selectedBatches).size
+    ) {
+      setIsError(true);
+      setMessage("Duplicate batches are not allowed.");
+      return;
+    }
     for (const row of rows) {
       if (
         Number(row.quantityToIssue) >
@@ -256,7 +269,18 @@ export function StockOut() {
                         </SelectTrigger>
                         <SelectContent>
                           {batchOptions
-                            .filter((item) => !row.product || item.productName === row.product)
+                            .filter((item) => {
+                              const alreadySelected = rows.some(
+                                (r) =>
+                                  r.id !== row.id &&
+                                  r.productBatchId === item.productBatchId
+                              );
+
+                              return (
+                                (!row.product || item.productName === row.product) &&
+                                !alreadySelected
+                              );
+                            })
                             .map((item) => (
                               <SelectItem
                                 key={item.productBatchId}

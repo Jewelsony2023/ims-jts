@@ -36,6 +36,10 @@ public class StockTransactionService : IStockTransactionService
     public async Task<bool> ProcessStockOutAsync(StockOutRequestDto request, int userId)
     {
         var productBatchIds = request.Items.Select(i => i.ProductBatchId).ToList();
+        if (productBatchIds.Count != productBatchIds.Distinct().Count())
+            {
+                return false;
+            }
         var currentStock = await _stockTransactionRepository.GetCurrentStockByProductBatchIdsAsync(productBatchIds);
 
         foreach (var item in request.Items)

@@ -92,7 +92,9 @@ public class StockTransactionRepository : IStockTransactionRepository
         foreach (var item in request.Items)
         {
             var batch = await _context.ProductBatches
-                .FirstOrDefaultAsync(pb => pb.ProductBatchId == item.ProductBatchId && pb.ProductId == item.ProductId);
+                .FirstOrDefaultAsync(
+                    pb => pb.ProductId == item.ProductId
+                    && pb.BatchNumber == item.BatchNumber);
 
             if (batch == null)
             {

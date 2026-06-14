@@ -91,10 +91,13 @@ public class StockTransactionRepository : IStockTransactionRepository
 
         foreach (var item in request.Items)
         {
+            var normalizedBatchNumber =
+                item.BatchNumber.Trim().ToUpper();
+
             var batch = await _context.ProductBatches
                 .FirstOrDefaultAsync(
                     pb => pb.ProductId == item.ProductId
-                    && pb.BatchNumber == item.BatchNumber);
+                    && pb.BatchNumber == normalizedBatchNumber);
 
             if (batch == null)
             {

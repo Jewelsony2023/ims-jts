@@ -126,7 +126,7 @@ public class StockTransactionRepository : IStockTransactionRepository
                     batch.CostPrice != item.CostPrice ||
                     batch.SellingPrice != item.SellingPrice)
                 {
-                    throw new Exception(
+                    throw new InvalidOperationException(
                         $"Batch {item.BatchNumber} already exists with different details.");
                 }
 

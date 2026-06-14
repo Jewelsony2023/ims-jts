@@ -105,7 +105,7 @@ public class StockTransactionRepository : IStockTransactionRepository
                 {
                     ProductId = item.ProductId,
                     SupplierId = item.SupplierId,
-                    BatchNumber = item.BatchNumber,
+                    BatchNumber = normalizedBatchNumber,
                     ManufactureDate = item.ManufactureDate,
                     ExpiryDate = item.ExpiryDate,
                     QuantityAvailable = item.Quantity,
@@ -120,6 +120,16 @@ public class StockTransactionRepository : IStockTransactionRepository
             }
             else
             {
+                if (batch.SupplierId != item.SupplierId ||
+                    batch.ManufactureDate.Date != item.ManufactureDate.Date ||
+                    batch.ExpiryDate.Date != item.ExpiryDate.Date ||
+                    batch.CostPrice != item.CostPrice ||
+                    batch.SellingPrice != item.SellingPrice)
+                {
+                    throw new Exception(
+                        $"Batch {item.BatchNumber} already exists with different details.");
+                }
+
                 batch.QuantityAvailable += item.Quantity;
             }
 

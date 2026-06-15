@@ -56,4 +56,63 @@ public class DashboardRepository : IDashboardRepository
             return 0;
         }
     }
+    public async Task<decimal> GetInventoryValueAsync()
+    {
+        return await _context.ProductBatches
+            .SumAsync(pb =>
+                pb.QuantityAvailable * pb.CostPrice);
+    }
+    public async Task<decimal> GetRevenueAsync()
+    {
+        return await _context.StockTransactionItems
+            .Where(x => x.TransactionType == "StockOut")
+            .SumAsync(x =>
+                x.Quantity * x.SellingPriceAtTransaction);
+    }
+    public async Task<decimal> GetProfitAsync()
+    {
+        return await _context.StockTransactionItems
+            .Where(x =>
+                x.TransactionType == "StockOut")
+            .SumAsync(x =>
+                x.Quantity *
+                (x.SellingPriceAtTransaction -
+                x.CostPriceAtTransaction));
+    }
+    public async Task<List<string>> GetLowStockProductsAsync()
+    {
+        return await _context.Products
+            .Where(product =>
+                (_context.ProductBatches
+                    .Where(batch => batch.ProductId == product.ProductId)
+                    .Sum(batch => (int?)batch.QuantityAvailable) ?? 0)
+                <= product.MinimumStockLevel)
+            .Select(product => product.ProductName)
+            .Take(10)
+            .ToListAsync();
+    }
+    public async Task<List<string>> GetExpiringProductsAsync()
+    {
+        var limitDate = DateTime.UtcNow.AddDays(30);
+
+        return await _context.ProductBatches
+            .Where(batch =>
+                batch.ExpiryDate >= DateTime.UtcNow &&
+                batch.ExpiryDate <= limitDate)
+            .Select(batch => batch.Product!.ProductName)
+            .Distinct()
+            .Take(10)
+            .ToListAsync();
+    }
+    public async Task<List<string>> GetExpiredProductsAsync()
+    {
+        return await _context.ProductBatches
+            .Where(batch =>
+                batch.ExpiryDate < DateTime.UtcNow)
+            .Select(batch => batch.Product!.ProductName)
+            .Distinct()
+            .Take(10)
+            .ToListAsync();
+    }
+
 }

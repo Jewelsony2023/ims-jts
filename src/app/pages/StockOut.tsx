@@ -68,13 +68,15 @@ export function StockOut() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
+  const fetchBatchData = async () => {
+    const response = await axios.get<ProductBatchOption[]>(
+      `${import.meta.env.VITE_API_URL}/api/products/batches`,
+    );
+
+    setBatchOptions(response.data);
+  };
+
   useEffect(() => {
-    const fetchBatchData = async () => {
-      const response = await axios.get<ProductBatchOption[]>(
-        `${import.meta.env.VITE_API_URL}/api/products/batches`,
-      );
-      setBatchOptions(response.data);
-    };
     fetchBatchData().catch(console.error);
   }, []);
 
@@ -129,6 +131,9 @@ export function StockOut() {
 
       const token = localStorage.getItem("token");
 
+      console.log("STOCK OUT REQUEST");
+      console.log(JSON.stringify(requestData, null, 2));
+
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-out`,
         requestData,
@@ -145,19 +150,26 @@ export function StockOut() {
         "Stock Out completed successfully."
       );
 
+      await fetchBatchData();
+
+      setRows([createRow(1), createRow(2)]);
+
       console.log(response.data);
 
     } catch (error: any) {
 
-      console.error(error);
+        console.log("FULL ERROR RESPONSE");
+        console.log(JSON.stringify(error.response?.data, null, 2));
 
-      setIsError(true);
+        console.error(error);
 
-      setMessage(
-        error?.response?.data?.message ??
-        "Stock Out failed."
-      );
-    }
+        setIsError(true);
+
+        setMessage(
+          error?.response?.data?.message ??
+          "Stock Out failed."
+        );
+      }
   };
 
   return (

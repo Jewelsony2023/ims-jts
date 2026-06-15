@@ -5,4 +5,5 @@ namespace InventoryManagement.API.Interfaces.Services;
 public interface IDashboardService
 {
     Task<DashboardStatsDto> GetStatsAsync();
+    Task<DashboardAlertsDto> GetAlertsAsync();
 }

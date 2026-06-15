@@ -35,6 +35,8 @@ interface StockInRow {
   sellingPrice: string;
   supplierId: number;
   supplierName: string;
+
+  isExistingBatch: boolean;
 }
 
 type ProductOption = {
@@ -59,7 +61,8 @@ const createRow = (id: number): StockInRow => ({
   costPrice: "",
   sellingPrice: "",
   supplierId: 0,
-  supplierName: ""
+  supplierName: "",
+  isExistingBatch: false
 });
 
 export function StockIn() {
@@ -85,6 +88,63 @@ export function StockIn() {
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
     );
+  };
+  const fetchBatchDetails = async (
+    rowId: number,
+    productId: number,
+    batchNumber: string
+  ) => {
+    if (!productId || !batchNumber.trim()) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/stocktransactions/batch-details`,
+        {
+          params: {
+            productId,
+            batchNumber,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const batch = response.data;
+
+      setRows((current) =>
+        current.map((row) =>
+          row.id === rowId
+            ? {
+                ...row,
+                productBatchId: batch.productBatchId,
+                supplierId: batch.supplierId,
+                manufactureDate:
+                  batch.manufactureDate.split("T")[0],
+                expiryDate:
+                  batch.expiryDate.split("T")[0],
+                costPrice: batch.costPrice.toString(),
+                sellingPrice: batch.sellingPrice.toString(),
+                isExistingBatch: true,
+              }
+            : row
+        )
+      );
+    } catch {
+      setRows((current) =>
+        current.map((row) =>
+          row.id === rowId
+            ? {
+                ...row,
+                productBatchId: null,
+                isExistingBatch: false,
+              }
+            : row
+        )
+      );
+    }
   };
 
   const handleSubmit = async () => {
@@ -233,25 +293,102 @@ export function StockIn() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Input value={row.batchNumber} onChange={(event) => updateRow(row.id, "batchNumber", event.target.value)} className="bg-white" />
+                      <Input
+                        value={row.batchNumber}
+                        onChange={(event) =>
+                          updateRow(
+                            row.id,
+                            "batchNumber",
+                            event.target.value.toUpperCase()
+                          )
+                        }
+                        onBlur={() =>
+                          fetchBatchDetails(
+                            row.id,
+                            row.productId,
+                            row.batchNumber
+                          )
+                        }
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Input type="date" value={row.manufactureDate} onChange={(event) => updateRow(row.id, "manufactureDate", event.target.value)} className="bg-white" />
+                      <Input
+                        type="date"
+                        value={row.manufactureDate}
+                        disabled={row.isExistingBatch}
+                        onChange={(event) =>
+                          updateRow(
+                            row.id,
+                            "manufactureDate",
+                            event.target.value
+                          )
+                        }
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Input type="date" value={row.expiryDate} onChange={(event) => updateRow(row.id, "expiryDate", event.target.value)} className="bg-white" />
+                      <Input
+                        type="date"
+                        value={row.expiryDate}
+                        disabled={row.isExistingBatch}
+                        onChange={(event) =>
+                          updateRow(
+                            row.id,
+                            "expiryDate",
+                            event.target.value
+                          )
+                        }
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
                       <Input type="number" value={row.quantity} onChange={(event) => updateRow(row.id, "quantity", event.target.value)} className="bg-white" />
                     </TableCell>
                     <TableCell>
-                      <Input type="number" step="0.01" value={row.costPrice} onChange={(event) => updateRow(row.id, "costPrice", event.target.value)} className="bg-white" />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={row.costPrice}
+                        disabled={row.isExistingBatch}
+                        onChange={(event) =>
+                          updateRow(
+                            row.id,
+                            "costPrice",
+                            event.target.value
+                          )
+                        }
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Input type="number" step="0.01" value={row.sellingPrice} onChange={(event) => updateRow(row.id, "sellingPrice", event.target.value)} className="bg-white" />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={row.sellingPrice}
+                        disabled={row.isExistingBatch}
+                        onChange={(event) =>
+                          updateRow(
+                            row.id,
+                            "sellingPrice",
+                            event.target.value
+                          )
+                        }
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Select value={row.supplierId.toString()} onValueChange={(value) => updateRow(row.id, "supplierId", parseInt(value))}>
+                      <Select
+                        disabled={row.isExistingBatch}
+                        value={row.supplierId.toString()}
+                        onValueChange={(value) =>
+                          updateRow(
+                            row.id,
+                            "supplierId",
+                            parseInt(value)
+                          )
+                        }
+                      >
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select supplier" />
                         </SelectTrigger>

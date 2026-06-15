@@ -17,10 +17,40 @@ public class DashboardService : IDashboardService
     {
         return new DashboardStatsDto
         {
-            TotalUsers = await _dashboardRepository.GetTotalUsersAsync(),
-            TotalProducts = await _dashboardRepository.GetTotalProductsAsync(),
-            TotalSuppliers = await _dashboardRepository.GetTotalSuppliersAsync(),
-            LowStockItems = await _dashboardRepository.GetLowStockItemsAsync()
+            TotalUsers =
+                await _dashboardRepository.GetTotalUsersAsync(),
+
+            TotalProducts =
+                await _dashboardRepository.GetTotalProductsAsync(),
+
+            TotalSuppliers =
+                await _dashboardRepository.GetTotalSuppliersAsync(),
+
+            LowStockItems =
+                await _dashboardRepository.GetLowStockItemsAsync(),
+
+            InventoryValue =
+                await _dashboardRepository.GetInventoryValueAsync(),
+
+            Revenue =
+                await _dashboardRepository.GetRevenueAsync(),
+
+            Profit =
+                await _dashboardRepository.GetProfitAsync()
+        };
+    }
+    public async Task<DashboardAlertsDto> GetAlertsAsync()
+    {
+        return new DashboardAlertsDto
+        {
+            LowStockProducts =
+                await _dashboardRepository.GetLowStockProductsAsync(),
+
+            ExpiringProducts =
+                await _dashboardRepository.GetExpiringProductsAsync(),
+
+            ExpiredProducts =
+                await _dashboardRepository.GetExpiredProductsAsync()
         };
     }
 }

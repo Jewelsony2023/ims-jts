@@ -166,4 +166,27 @@ public class StockTransactionRepository : IStockTransactionRepository
             .Where(pb => productBatchIds.Contains(pb.ProductBatchId))
             .ToDictionaryAsync(pb => pb.ProductBatchId, pb => pb.QuantityAvailable);
     }
+    public async Task<BatchDetailsDto?> GetBatchDetailsAsync(
+        int productId,
+        string batchNumber)
+    {
+        var normalizedBatchNumber =
+            batchNumber.Trim().ToUpper();
+
+        return await _context.ProductBatches
+            .AsNoTracking()
+            .Where(pb =>
+                pb.ProductId == productId &&
+                pb.BatchNumber == normalizedBatchNumber)
+            .Select(pb => new BatchDetailsDto
+            {
+                ProductBatchId = pb.ProductBatchId,
+                SupplierId = pb.SupplierId,
+                ManufactureDate = pb.ManufactureDate,
+                ExpiryDate = pb.ExpiryDate,
+                CostPrice = pb.CostPrice,
+                SellingPrice = pb.SellingPrice
+            })
+            .FirstOrDefaultAsync();
+    }
 }

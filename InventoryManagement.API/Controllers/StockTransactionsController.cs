@@ -70,4 +70,22 @@ public class StockTransactionsController : ControllerBase
         }
         return Ok();
     }
+    [HttpGet("batch-details")]
+    public async Task<IActionResult> GetBatchDetails(
+        [FromQuery] int productId,
+        [FromQuery] string batchNumber)
+    {
+        var batch =
+            await _stockTransactionService
+                .GetBatchDetailsAsync(
+                    productId,
+                    batchNumber);
+
+        if (batch == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(batch);
+    }
 }

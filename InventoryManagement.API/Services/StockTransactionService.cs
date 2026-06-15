@@ -84,13 +84,12 @@ public class StockTransactionService : IStockTransactionService
             };
             _context.StockTransactionItems.Add(transactionItem);
         }
-        Task<BatchDetailsDto?> GetBatchDetailsAsync(
-            int productId,
-            string batchNumber);
+
 
         await _context.SaveChangesAsync();
         return true;
     }
+
     public Task<BatchDetailsDto?> GetBatchDetailsAsync(
         int productId,
         string batchNumber)

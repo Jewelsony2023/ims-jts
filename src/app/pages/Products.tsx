@@ -49,6 +49,7 @@ export function Products() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [open, setOpen] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -99,6 +100,7 @@ export function Products() {
   }, []);
   const resetForm = () => {
     setEditingId(null);
+    setErrors({});
 
     setFormData({
       name: "",
@@ -111,24 +113,25 @@ export function Products() {
     });
   };
   const handleSaveProduct = async () => {
+    const nextErrors: { [key: string]: string } = {};
 
-    if (
-      !formData.name.trim() ||
-      !formData.sku.trim() ||
-      !formData.barcode.trim()
-    ) {
-      alert("Please fill all required fields");
-      return;
+    if (!formData.name.trim()) nextErrors.name = "Product name is required";
+    if (!formData.sku.trim()) nextErrors.sku = "SKU is required";
+    if (!formData.barcode.trim()) nextErrors.barcode = "Barcode is required";
+    if (!formData.categoryId) nextErrors.categoryId = "Category is required";
+    if (formData.minimumStockLevel <= 0) {
+      nextErrors.minimumStockLevel = "Minimum stock level must be greater than 0";
     }
 
-    if (formData.minimumStockLevel <= 0) {
-      alert("Minimum stock level cannot be negative");
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
     if (isSaving) return;
 
     setIsSaving(true);
+    setErrors({});
 
     try {
 
@@ -253,14 +256,21 @@ export function Products() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       name: e.target.value,
-                    })
-                  }
-                  className="bg-white"
+                    });
+                    setErrors((prev) => ({
+                      ...prev,
+                      name: "",
+                    }));
+                  }}
+                  className={`bg-white ${errors.name ? "border-red-500" : ""}`}
                 />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -268,14 +278,21 @@ export function Products() {
                 <Input
                   id="sku"
                   value={formData.sku}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       sku: e.target.value,
-                    })
-                  }
-                  className="bg-white"
+                    });
+                    setErrors((prev) => ({
+                      ...prev,
+                      sku: "",
+                    }));
+                  }}
+                  className={`bg-white ${errors.sku ? "border-red-500" : ""}`}
                 />
+                {errors.sku && (
+                  <p className="text-sm text-red-500">{errors.sku}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -283,14 +300,21 @@ export function Products() {
                 <Input
                   id="barcode"
                   value={formData.barcode}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       barcode: e.target.value,
-                    })
-                  }
-                  className="bg-white"
+                    });
+                    setErrors((prev) => ({
+                      ...prev,
+                      barcode: "",
+                    }));
+                  }}
+                  className={`bg-white ${errors.barcode ? "border-red-500" : ""}`}
                 />
+                {errors.barcode && (
+                  <p className="text-sm text-red-500">{errors.barcode}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -299,14 +323,21 @@ export function Products() {
                   id="minimumStockLevel"
                   type="number"
                   value={formData.minimumStockLevel}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       minimumStockLevel: Number(e.target.value),
-                    })
-                  }
-                  className="bg-white"
+                    });
+                    setErrors((prev) => ({
+                      ...prev,
+                      minimumStockLevel: "",
+                    }));
+                  }}
+                  className={`bg-white ${errors.minimumStockLevel ? "border-red-500" : ""}`}
                 />
+                {errors.minimumStockLevel && (
+                  <p className="text-sm text-red-500">{errors.minimumStockLevel}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -314,9 +345,13 @@ export function Products() {
                   setFormData({
                     ...formData,
                     categoryId: Number(value),
-                  })
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    categoryId: "",
+                  }));
                 }}>
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className={`bg-white ${errors.categoryId ? "border-red-500" : ""}`}>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -330,18 +365,21 @@ export function Products() {
                     <SelectItem value="8">Dairy</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.categoryId && (
+                  <p className="text-sm text-red-500">{errors.categoryId}</p>
+                )}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
                   value={formData.description}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       description: e.target.value,
-                    })
-                  }
+                    });
+                  }}
                   placeholder="Product description"
                   className="bg-white"
                 />
@@ -353,12 +391,12 @@ export function Products() {
                   <Input
                     id="image"
                     value={formData.image}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         image: e.target.value,
-                      })
-                    }
+                      });
+                    }}
                     placeholder="Image URL"
                     className="bg-white"
                   />
@@ -441,6 +479,7 @@ export function Products() {
                         </Button>
                       </Link>
                       <Button variant="ghost" size="icon" onClick={() => {
+                        setErrors({});
                         setEditingId(product.id);
 
                         setFormData({

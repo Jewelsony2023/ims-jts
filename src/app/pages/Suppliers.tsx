@@ -39,6 +39,7 @@ export function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -73,6 +74,7 @@ export function Suppliers() {
   }, []);
   const resetForm = () => {
     setEditingId(null);
+    setErrors({});
 
     setFormData({
       name: "",
@@ -87,26 +89,31 @@ export function Suppliers() {
 
 
   const handleSaveSupplier = async () => {
+    const nextErrors: { [key: string]: string } = {};
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (
-      !formData.name.trim() ||
-      !formData.contact.trim() ||
-      !formData.email.trim() ||
-      !formData.phone.trim() ||
-      !formData.address.trim()
-    ) {
-      alert("Please fill all fields");
-      return;
+    if (!formData.name.trim()) nextErrors.name = "Supplier name is required";
+    if (!formData.contact.trim()) nextErrors.contact = "Contact person is required";
+    if (!formData.email.trim()) {
+      nextErrors.email = "Email is required";
+    } else if (!emailPattern.test(formData.email.trim())) {
+      nextErrors.email = "Enter a valid email address";
+    }
+    if (!formData.phone.trim()) nextErrors.phone = "Phone is required";
+    if (!formData.address.trim()) nextErrors.address = "Address is required";
+    if (formData.leadTime <= 0) {
+      nextErrors.leadTime = "Lead time must be greater than 0";
     }
 
-    if (formData.leadTime <= 0) {
-      alert("Lead time must be greater than 0");
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
     if (isSaving) return;
 
     setIsSaving(true);
+    setErrors({});
 
     
     try {
@@ -181,6 +188,7 @@ export function Suppliers() {
         <Button
           className="bg-emerald-500 hover:bg-emerald-600"
           onClick={() => {
+            setErrors({});
             setEditingId(null);
 
             setFormData({
@@ -305,6 +313,7 @@ export function Suppliers() {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
+                          setErrors({});
                           setEditingId(supplier.id);
 
                           setFormData({
@@ -479,6 +488,7 @@ export function Suppliers() {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
+                                setErrors({});
                                 setEditingId(supplier.id);
 
                                 setFormData({
@@ -549,65 +559,105 @@ export function Suppliers() {
               <Label>Name</Label>
               <Input
                 value={formData.name}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     name: e.target.value,
-                  })
-                }
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    name: "",
+                  }));
+                }}
+                className={errors.name ? "border-red-500" : ""}
               />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name}</p>
+              )}
             </div>
 
             <div>
               <Label>Contact Person</Label>
               <Input
                 value={formData.contact}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     contact: e.target.value,
-                  })
-                }
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    contact: "",
+                  }));
+                }}
+                className={errors.contact ? "border-red-500" : ""}
               />
+              {errors.contact && (
+                <p className="text-sm text-red-500">{errors.contact}</p>
+              )}
             </div>
 
             <div>
               <Label>Email</Label>
               <Input
                 value={formData.email}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     email: e.target.value,
-                  })
-                }
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    email: "",
+                  }));
+                }}
+                className={errors.email ? "border-red-500" : ""}
               />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div>
               <Label>Phone</Label>
               <Input
                 value={formData.phone}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     phone: e.target.value,
-                  })
-                }
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    phone: "",
+                  }));
+                }}
+                className={errors.phone ? "border-red-500" : ""}
               />
+              {errors.phone && (
+                <p className="text-sm text-red-500">{errors.phone}</p>
+              )}
             </div>
 
             <div>
               <Label>Address</Label>
               <Input
                 value={formData.address}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     address: e.target.value,
-                  })
-                }
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    address: "",
+                  }));
+                }}
+                className={errors.address ? "border-red-500" : ""}
               />
+              {errors.address && (
+                <p className="text-sm text-red-500">{errors.address}</p>
+              )}
             </div>
 
             <div>
@@ -615,15 +665,23 @@ export function Suppliers() {
               <Input
                 type="number"
                 value={formData.leadTime}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({
                     ...formData,
                     leadTime: Number(
                       e.target.value
                     ),
-                  })
-                }
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    leadTime: "",
+                  }));
+                }}
+                className={errors.leadTime ? "border-red-500" : ""}
               />
+              {errors.leadTime && (
+                <p className="text-sm text-red-500">{errors.leadTime}</p>
+              )}
             </div>
 
           </div>

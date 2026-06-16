@@ -5,13 +5,13 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../components/ui/dialog";
 
 type Category = {
@@ -24,7 +24,15 @@ type Category = {
 
 export function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+  });
+
   const totalProducts = categories.reduce(
     (total, category) => total + category.productCount,
     0,
@@ -36,19 +44,109 @@ export function Categories() {
     0,
   );
 
-  useEffect(() => {
-    const fetchCategories = async () => {
+  const fetchCategories = async () => {
+    try {
       const response = await axios.get<Category[]>(
         `${import.meta.env.VITE_API_URL}/api/categories`,
       );
 
       setCategories(response.data);
-    };
-
-    fetchCategories().catch((error) => {
+    } catch (error) {
       console.error(error);
-    });
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
   }, []);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setErrors({});
+    setFormData({
+      name: "",
+      description: "",
+    });
+  };
+
+  const handleAddCategory = () => {
+    setErrors({});
+    resetForm();
+    setOpen(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setErrors({});
+    setEditingId(category.id);
+    setFormData({
+      name: category.name,
+      description: category.description,
+    });
+    setOpen(true);
+  };
+
+  const handleSaveCategory = async () => {
+    const nextErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      nextErrors.name = "Category name is required";
+    }
+
+    if (!formData.description.trim()) {
+      nextErrors.description = "Description is required";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    if (isSaving) return;
+
+    setIsSaving(true);
+    setErrors({});
+
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+      };
+
+      if (editingId === null) {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/categories`,
+          payload,
+        );
+      } else {
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/api/categories/${editingId}`,
+          payload,
+        );
+      }
+
+      await fetchCategories();
+      resetForm();
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!confirm("Delete category?")) return;
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/categories/${id}`,
+      );
+
+      await fetchCategories();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -60,44 +158,10 @@ export function Categories() {
             Manage product categories and classifications
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-emerald-500 hover:bg-emerald-600">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add New Category</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Category Name</Label>
-                <Input id="name" placeholder="Enter category name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter category description"
-                  rows={3}
-                />
-              </div>
-              <div className="flex gap-2 justify-end pt-4">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-emerald-500 hover:bg-emerald-600"
-                  onClick={() => setIsAddDialogOpen(false)}
-                >
-                  Create Category
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={handleAddCategory}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Category
+        </Button>
       </div>
 
       {/* Statistics Cards */}
@@ -177,10 +241,20 @@ export function Categories() {
                   <Package className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEditCategory(category)}
+                  >
                     <Edit className="w-4 h-4 text-slate-600" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleDeleteCategory(category.id)}
+                  >
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
                 </div>
@@ -201,6 +275,84 @@ export function Categories() {
           </Card>
         ))}
       </div>
+
+      <Dialog
+        open={open}
+        onOpenChange={(value) => {
+          setOpen(value);
+
+          if (!value) {
+            resetForm();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingId === null ? "Add New Category" : "Edit Category"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Category Name</Label>
+              <Input
+                id="name"
+                placeholder="Enter category name"
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData({
+                    ...formData,
+                    name: e.target.value,
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    name: "",
+                  }));
+                }}
+                className={errors.name ? "border-red-500" : ""}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Enter category description"
+                rows={3}
+                value={formData.description}
+                onChange={(e) => {
+                  setFormData({
+                    ...formData,
+                    description: e.target.value,
+                  });
+                  setErrors((prev) => ({
+                    ...prev,
+                    description: "",
+                  }));
+                }}
+                className={errors.description ? "border-red-500" : ""}
+              />
+              {errors.description && (
+                <p className="text-sm text-red-500">{errors.description}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-emerald-500 hover:bg-emerald-600"
+              onClick={handleSaveCategory}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

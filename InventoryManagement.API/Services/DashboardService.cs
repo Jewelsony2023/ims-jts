@@ -53,4 +53,29 @@ public class DashboardService : IDashboardService
                 await _dashboardRepository.GetExpiredProductsAsync()
         };
     }
+    public async Task<List<DashboardActivityDto>>
+        GetRecentActivityAsync()
+    {
+        return await _dashboardRepository
+            .GetRecentActivityAsync();
+    }
+    public async Task<List<StockMovementDto>>
+        GetStockMovementAsync()
+    {
+        return await _dashboardRepository
+            .GetStockMovementAsync();
+    }
+    public async Task<List<RevenueTrendDto>>
+        GetRevenueTrendAsync(string view)
+    {
+        return await _dashboardRepository
+            .GetRevenueTrendAsync(view);
+    }
+
+    public async Task<List<InventoryValueTrendDto>>
+        GetInventoryValueTrendAsync()
+    {
+        return await _dashboardRepository
+            .GetInventoryValueTrendAsync();
+    }
 }

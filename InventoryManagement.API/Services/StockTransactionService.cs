@@ -67,6 +67,7 @@ public class StockTransactionService : IStockTransactionService
         {
             var batch = await _context.ProductBatches
                 .FirstOrDefaultAsync(pb => pb.ProductBatchId == item.ProductBatchId);
+            var costPrice = batch?.CostPrice ?? 0;
 
             if (batch != null)
             {
@@ -80,6 +81,7 @@ public class StockTransactionService : IStockTransactionService
                 ProductBatchId = item.ProductBatchId,
                 TransactionType = "StockOut",
                 Quantity = item.Quantity,
+                CostPriceAtTransaction = costPrice,
                 SellingPriceAtTransaction = item.SellingPrice
             };
             _context.StockTransactionItems.Add(transactionItem);

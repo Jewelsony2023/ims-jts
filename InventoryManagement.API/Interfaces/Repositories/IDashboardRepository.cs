@@ -1,3 +1,4 @@
+using InventoryManagement.API.DTOs;
 namespace InventoryManagement.API.Interfaces.Repositories;
 
 public interface IDashboardRepository
@@ -19,4 +20,9 @@ public interface IDashboardRepository
     Task<List<string>> GetExpiringProductsAsync();
 
     Task<List<string>> GetExpiredProductsAsync();
+    Task<List<DashboardActivityDto>> GetRecentActivityAsync();
+    Task<List<StockMovementDto>> GetStockMovementAsync();
+    Task<List<RevenueTrendDto>> GetRevenueTrendAsync(string view);
+
+    Task<List<InventoryValueTrendDto>> GetInventoryValueTrendAsync();
 }

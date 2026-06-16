@@ -5,7 +5,17 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 type Supplier = {
   id: number;
   name: string;
@@ -37,20 +47,87 @@ const ratings = [4.8, 4.6, 4.9, 4.5, 4.3, 4.7];
 
 export function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchSuppliers = async () => {
-      const response = await axios.get<Supplier[]>(
-        `${import.meta.env.VITE_API_URL}/api/suppliers`,
+  const [editingId, setEditingId] =
+    useState<number | null>(null);
+
+  const [formData, setFormData] =
+    useState({
+      name: "",
+      contact: "",
+      email: "",
+      phone: "",
+      address: "",
+      leadTime: 0,
+      isActive: true,
+    });
+
+  const fetchSuppliers = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/suppliers`
       );
 
       setSuppliers(response.data);
-    };
-
-    fetchSuppliers().catch((error) => {
+    } catch (error) {
       console.error(error);
-    });
-  }, []);
+    }
+  };
+
+useEffect(() => {
+  fetchSuppliers();
+}, []);
+  const handleSaveSupplier = async () => {
+    try {
+      if (editingId === null) {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/suppliers`,
+          formData
+        );
+      } else {
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/api/suppliers/${editingId}`,
+          formData
+        );
+      }
+
+      await fetchSuppliers();
+
+      setOpen(false);
+
+      setEditingId(null);
+
+      setFormData({
+        name: "",
+        contact: "",
+        email: "",
+        phone: "",
+        address: "",
+        leadTime: 0,
+        isActive: true,
+      });
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleDeleteSupplier = async (
+    id: number
+  ) => {
+    if (!confirm("Delete supplier?"))
+      return;
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/suppliers/${id}`
+      );
+
+      await fetchSuppliers();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const suppliersWithExtras = suppliers.map((supplier, index) => ({
     ...supplier,
@@ -76,7 +153,24 @@ export function Suppliers() {
             Manage supplier relationships and contacts
           </p>
         </div>
-        <Button className="bg-emerald-500 hover:bg-emerald-600">
+        <Button
+          className="bg-emerald-500 hover:bg-emerald-600"
+          onClick={() => {
+            setEditingId(null);
+
+            setFormData({
+              name: "",
+              contact: "",
+              email: "",
+              phone: "",
+              address: "",
+              leadTime: 0,
+              isActive: true,
+            });
+
+            setOpen(true);
+          }}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Supplier
         </Button>
@@ -171,10 +265,41 @@ export function Suppliers() {
                       </Badge>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setEditingId(supplier.id);
+
+                          setFormData({
+                            name: supplier.name,
+                            contact: supplier.contact,
+                            email: supplier.email,
+                            phone: supplier.phone,
+                            address: supplier.address,
+                            leadTime:
+                              Number(
+                                String(supplier.leadTime)
+                                  .replace(" days", "")
+                              ) || 0,
+                            isActive:
+                              supplier.status === "Active",
+                          });
+
+                          setOpen(true);
+                        }}
+                      >
                         <Edit className="w-4 h-4 text-slate-600" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          handleDeleteSupplier(
+                            supplier.id
+                          )
+                        }
+                      >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -314,10 +439,41 @@ export function Suppliers() {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setEditingId(supplier.id);
+
+                                setFormData({
+                                  name: supplier.name,
+                                  contact: supplier.contact,
+                                  email: supplier.email,
+                                  phone: supplier.phone,
+                                  address: supplier.address,
+                                  leadTime:
+                                    Number(
+                                      String(supplier.leadTime)
+                                        .replace(" days", "")
+                                    ) || 0,
+                                  isActive:
+                                    supplier.status === "Active",
+                                });
+
+                                setOpen(true);
+                              }}
+                            >
                               <Edit className="w-4 h-4 text-slate-600" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                handleDeleteSupplier(
+                                  supplier.id
+                                )
+                              }
+                            >
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           </div>
@@ -331,6 +487,127 @@ export function Suppliers() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingId
+                ? "Edit Supplier"
+                : "Add Supplier"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+
+            <div>
+              <Label>Name</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    name: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Contact Person</Label>
+              <Input
+                value={formData.contact}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    contact: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Email</Label>
+              <Input
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    email: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Phone</Label>
+              <Input
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    phone: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Address</Label>
+              <Input
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    address: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Lead Time</Label>
+              <Input
+                type="number"
+                value={formData.leadTime}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    leadTime: Number(
+                      e.target.value
+                    ),
+                  })
+                }
+              />
+            </div>
+
+          </div>
+
+          <DialogFooter>
+
+            <Button
+              variant="outline"
+              onClick={() =>
+                setOpen(false)
+              }
+            >
+              Cancel
+            </Button>
+
+            <Button
+              className="bg-emerald-500 hover:bg-emerald-600"
+              onClick={handleSaveSupplier}
+            >
+              Save Supplier
+            </Button>
+
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

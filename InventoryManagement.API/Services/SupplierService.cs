@@ -8,18 +8,49 @@ public class SupplierService : ISupplierService
 {
     private readonly ISupplierRepository _supplierRepository;
 
-    public SupplierService(ISupplierRepository supplierRepository)
+    public SupplierService(
+        ISupplierRepository supplierRepository)
     {
         _supplierRepository = supplierRepository;
     }
 
-    public Task<List<SupplierDto>> GetSuppliersAsync()
+    public Task<List<SupplierDto>>
+        GetSuppliersAsync()
     {
-        return _supplierRepository.GetSuppliersAsync();
+        return _supplierRepository
+            .GetSuppliersAsync();
     }
 
-    public Task<SupplierDto?> GetSupplierByIdAsync(int id)
+    public Task<SupplierDto?>
+        GetSupplierByIdAsync(int id)
     {
-        return _supplierRepository.GetSupplierByIdAsync(id);
+        return _supplierRepository
+            .GetSupplierByIdAsync(id);
+    }
+
+    public Task<int>
+        CreateSupplierAsync(
+            SupplierCreateDto supplier)
+    {
+        return _supplierRepository
+            .CreateSupplierAsync(supplier);
+    }
+
+    public Task<bool>
+        UpdateSupplierAsync(
+            int id,
+            SupplierUpdateDto supplier)
+    {
+        return _supplierRepository
+            .UpdateSupplierAsync(
+                id,
+                supplier);
+    }
+
+    public Task<bool>
+        DeleteSupplierAsync(int id)
+    {
+        return _supplierRepository
+            .DeleteSupplierAsync(id);
     }
 }

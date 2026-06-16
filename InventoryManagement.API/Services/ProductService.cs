@@ -32,4 +32,25 @@ public class ProductService : IProductService
     {
         return _productRepository.GetProductBatchesAsync();
     }
+    public Task<int> CreateProductAsync(
+        ProductCreateDto product)
+    {
+        return _productRepository
+            .CreateProductAsync(product);
+    }
+
+    public Task<bool> UpdateProductAsync(
+        int id,
+        ProductUpdateDto product)
+    {
+        return _productRepository
+            .UpdateProductAsync(id, product);
+    }
+
+    public Task<bool> DeleteProductAsync(
+        int id)
+    {
+        return _productRepository
+            .DeleteProductAsync(id);
+    }
 }

@@ -48,21 +48,124 @@ export function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const response = await axios.get<Product[]>(
-        `${import.meta.env.VITE_API_URL}/api/products`,
+  const [editingId, setEditingId] =
+    useState<number | null>(null);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [formData, setFormData] =
+    useState({
+      name: "",
+      sku: "",
+      barcode: "",
+      description: "",
+      categoryId: 1,
+      image: "",
+      minimumStockLevel: 0,
+    });
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/products`
       );
 
       setProducts(response.data);
-    };
-
-    fetchProducts().catch((error) => {
+    }
+    catch (error) {
       console.error(error);
-    });
+    }
+  };
+  useEffect(() => {
+    fetchProducts();
   }, []);
+  const resetForm = () => {
+    setEditingId(null);
 
+    setFormData({
+      name: "",
+      sku: "",
+      barcode: "",
+      description: "",
+      categoryId: 1,
+      image: "",
+      minimumStockLevel: 0,
+    });
+  };
+  const handleSaveProduct = async () => {
+
+    if (
+      !formData.name.trim() ||
+      !formData.sku.trim() ||
+      !formData.barcode.trim()
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (formData.minimumStockLevel <= 0) {
+      alert("Minimum stock level cannot be negative");
+      return;
+    }
+
+    if (isSaving) return;
+
+    setIsSaving(true);
+
+    try {
+
+      if (editingId === null) {
+
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/products`,
+          formData
+        );
+
+      } else {
+
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/api/products/${editingId}`,
+          formData
+        );
+
+      }
+
+      await fetchProducts();
+
+      resetForm();
+
+      setOpen(false);
+
+    }
+    catch (error) {
+      console.error(error);
+    }
+    finally {
+      setIsSaving(false);
+    }
+  };
+  const handleDeleteProduct = async (
+    id: number
+  ) => {
+
+    if (!confirm("Delete product?"))
+      return;
+
+    try {
+
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/products/${id}`
+      );
+
+      await fetchProducts();
+
+    }
+    catch (error) {
+      console.error(error);
+    }
+  };
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "In Stock":
@@ -111,58 +214,147 @@ export function Products() {
             </SelectContent>
           </Select>
         </div>
-        <Dialog>
+        <Dialog open={open} onOpenChange={(value) => {
+          setOpen(value);
+
+          if (!value) {
+            resetForm();
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button className="bg-emerald-500 hover:bg-emerald-600">
+            <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={() => {
+              resetForm();
+              setOpen(true);
+            }}>
               <Plus className="w-4 h-4 mr-2" />
               Add Product
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add Product</DialogTitle>
+              <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {[
-                ["name", "Product Name"],
-                ["sku", "SKU"],
-                ["barcode", "Barcode"],
-                ["stock", "Opening Stock"],
-              ].map(([id, label]) => (
-                <div key={id} className="space-y-2">
-                  <Label htmlFor={id}>{label}</Label>
-                  <Input id={id} className="bg-white" />
-                </div>
-              ))}
+              <div className="space-y-2">
+                <Label htmlFor="name">Product Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      name: e.target.value,
+                    })
+                  }
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sku">SKU</Label>
+                <Input
+                  id="sku"
+                  value={formData.sku}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      sku: e.target.value,
+                    })
+                  }
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="barcode">Barcode</Label>
+                <Input
+                  id="barcode"
+                  value={formData.barcode}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      barcode: e.target.value,
+                    })
+                  }
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minimumStockLevel">Minimum Stock Level</Label>
+                <Input
+                  id="minimumStockLevel"
+                  type="number"
+                  value={formData.minimumStockLevel}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      minimumStockLevel: Number(e.target.value),
+                    })
+                  }
+                  className="bg-white"
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select>
+                <Select value={String(formData.categoryId)} onValueChange={(value) => {
+                  setFormData({
+                    ...formData,
+                    categoryId: Number(value),
+                  })
+                }}>
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="antibiotics">Antibiotics</SelectItem>
-                    <SelectItem value="pain-relief">Pain Relief</SelectItem>
-                    <SelectItem value="ppe">PPE</SelectItem>
-                    <SelectItem value="beverages">Beverages</SelectItem>
+                    <SelectItem value="1">Antibiotics</SelectItem>
+                    <SelectItem value="2">Pain Relief</SelectItem>
+                    <SelectItem value="3">Diabetes</SelectItem>
+                    <SelectItem value="4">PPE</SelectItem>
+                    <SelectItem value="5">Hygiene</SelectItem>
+                    <SelectItem value="6">Vitamins</SelectItem>
+                    <SelectItem value="7">Beverages</SelectItem>
+                    <SelectItem value="8">Dairy</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
-                <Input id="description" placeholder="Product description" className="bg-white" />
+                <Input
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Product description"
+                  className="bg-white"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="image">Product Image</Label>
                 <div className="flex items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
                   <Upload className="h-5 w-5 text-emerald-600" />
-                  <Input id="image" type="file" className="bg-white" />
+                  <Input
+                    id="image"
+                    value={formData.image}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        image: e.target.value,
+                      })
+                    }
+                    placeholder="Image URL"
+                    className="bg-white"
+                  />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button className="bg-emerald-500 hover:bg-emerald-600">
-                Save Product
+              <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={handleSaveProduct} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Product"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -235,10 +427,26 @@ export function Products() {
                           <Eye className="w-4 h-4 text-blue-600" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        setEditingId(product.id);
+
+                        setFormData({
+                          name: product.name,
+                          sku: product.sku,
+                          barcode: product.barcode,
+                          description: product.description,
+                          categoryId: 1,
+                          image: product.image,
+                          minimumStockLevel: 0,
+                        });
+
+                        setOpen(true);
+                      }}>
                         <Edit className="w-4 h-4 text-slate-600" />
                       </Button>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() =>
+                        handleDeleteProduct(product.id)
+                      }>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>

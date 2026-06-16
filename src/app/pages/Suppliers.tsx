@@ -32,18 +32,8 @@ type Supplier = {
   rating?: number;
 };
 
-const linkedProducts = [
-  "Antibiotics, Pain Relief, Diabetes",
-  "PPE, Hygiene, Surgical Supplies",
-  "Medical Devices, Diagnostics",
-  "Dairy, Beverages, Fresh Foods",
-  "Cold Chain, Injectables",
-  "Masks, Gloves, Sanitizers"
-];
 
-const onTimeRates = ["96%", "93%", "98%", "91%", "88%", "95%"];
-const defectRates = ["0.8%", "1.1%", "0.5%", "1.6%", "2.3%", "0.9%"];
-const ratings = [4.8, 4.6, 4.9, 4.5, 4.3, 4.7];
+
 
 export function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -62,6 +52,8 @@ export function Suppliers() {
       leadTime: 0,
       isActive: true,
     });
+  const [isSaving, setIsSaving] =
+    useState(false);
 
   const fetchSuppliers = async () => {
     try {
@@ -75,10 +67,47 @@ export function Suppliers() {
     }
   };
 
-useEffect(() => {
-  fetchSuppliers();
-}, []);
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+  const resetForm = () => {
+    setEditingId(null);
+
+    setFormData({
+      name: "",
+      contact: "",
+      email: "",
+      phone: "",
+      address: "",
+      leadTime: 0,
+      isActive: true,
+    });
+  };
+
+
   const handleSaveSupplier = async () => {
+
+    if (
+      !formData.name.trim() ||
+      !formData.contact.trim() ||
+      !formData.email.trim() ||
+      !formData.phone.trim() ||
+      !formData.address.trim()
+    ) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (formData.leadTime <= 0) {
+      alert("Lead time must be greater than 0");
+      return;
+    }
+
+    if (isSaving) return;
+
+    setIsSaving(true);
+
+    
     try {
       if (editingId === null) {
         await axios.post(
@@ -94,22 +123,15 @@ useEffect(() => {
 
       await fetchSuppliers();
 
+      resetForm();
+
       setOpen(false);
-
-      setEditingId(null);
-
-      setFormData({
-        name: "",
-        contact: "",
-        email: "",
-        phone: "",
-        address: "",
-        leadTime: 0,
-        isActive: true,
-      });
 
     } catch (error) {
       console.error(error);
+    }
+    finally {
+      setIsSaving(false);
     }
   };
   const handleDeleteSupplier = async (
@@ -129,14 +151,7 @@ useEffect(() => {
     }
   };
 
-  const suppliersWithExtras = suppliers.map((supplier, index) => ({
-    ...supplier,
-    linkedProducts: supplier.linkedProducts || linkedProducts[index % linkedProducts.length] || "",
-    leadTime: `${supplier.leadTime} days`,
-    onTimeRate: supplier.onTimeRate || onTimeRates[index % onTimeRates.length] || "0%",
-    defectRate: supplier.defectRate || defectRates[index % defectRates.length] || "0%",
-    rating: supplier.rating ?? ratings[index % ratings.length] ?? 0
-  }));
+  const suppliersWithExtras = suppliers
 
   const totalProducts = suppliersWithExtras.reduce((sum, s) => sum + s.productsSupplied, 0);
   const avgRating = suppliersWithExtras.length > 0
@@ -490,7 +505,13 @@ useEffect(() => {
 
       <Dialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(value) => {
+          setOpen(value);
+
+          if (!value) {
+            resetForm();
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
@@ -600,8 +621,11 @@ useEffect(() => {
             <Button
               className="bg-emerald-500 hover:bg-emerald-600"
               onClick={handleSaveSupplier}
+              disabled={isSaving}
             >
-              Save Supplier
+              {isSaving
+                ? "Saving..."
+                : "Save Supplier"}
             </Button>
 
           </DialogFooter>

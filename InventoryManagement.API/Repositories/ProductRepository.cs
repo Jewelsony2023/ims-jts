@@ -2,6 +2,7 @@ using InventoryManagement.API.Data;
 using InventoryManagement.API.DTOs;
 using InventoryManagement.API.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
+using InventoryManagement.API.Models;
 
 namespace InventoryManagement.API.Repositories;
 
@@ -105,5 +106,75 @@ public class ProductRepository : IProductRepository
                             ? "Low Stock"
                             : "In Stock"
             });
+    }
+    public async Task<int> CreateProductAsync(
+        ProductCreateDto product)
+    {
+        var newProduct = new Product
+        {
+            ProductName = product.Name,
+            SKU = product.Sku,
+            Barcode = product.Barcode,
+            Description = product.Description,
+            CategoryId = product.CategoryId,
+            ProductImageUrl = product.Image,
+            MinimumStockLevel = product.MinimumStockLevel,
+            IsActive = true
+        };
+
+        _context.Products.Add(newProduct);
+
+        await _context.SaveChangesAsync();
+
+        return newProduct.ProductId;
+    }
+
+    public async Task<bool> UpdateProductAsync(
+        int id,
+        ProductUpdateDto product)
+    {
+        var existing =
+            await _context.Products
+                .FirstOrDefaultAsync(x =>
+                    x.ProductId == id &&
+                    x.DeletedAt == null);
+
+        if (existing == null)
+            return false;
+
+        existing.ProductName = product.Name;
+        existing.SKU = product.Sku;
+        existing.Barcode = product.Barcode;
+        existing.Description = product.Description;
+        existing.CategoryId = product.CategoryId;
+        existing.ProductImageUrl = product.Image;
+        existing.MinimumStockLevel =
+            product.MinimumStockLevel;
+
+        existing.UpdatedAt =
+            DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> DeleteProductAsync(
+        int id)
+    {
+        var existing =
+            await _context.Products
+                .FirstOrDefaultAsync(x =>
+                    x.ProductId == id);
+
+        if (existing == null)
+            return false;
+
+        existing.DeletedAt =
+            DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }

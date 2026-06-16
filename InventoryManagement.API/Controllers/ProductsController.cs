@@ -49,4 +49,47 @@ public class ProductsController : ControllerBase
         var batches = await _productService.GetProductBatchesAsync();
         return Ok(batches);
     }
+    [HttpPost]
+    public async Task<IActionResult>
+        CreateProduct(
+            ProductCreateDto product)
+    {
+        var id =
+            await _productService
+                .CreateProductAsync(product);
+
+        return Ok(id);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult>
+        UpdateProduct(
+            int id,
+            ProductUpdateDto product)
+    {
+        var result =
+            await _productService
+                .UpdateProductAsync(
+                    id,
+                    product);
+
+        if (!result)
+            return NotFound();
+
+        return Ok();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult>
+        DeleteProduct(int id)
+    {
+        var result =
+            await _productService
+                .DeleteProductAsync(id);
+
+        if (!result)
+            return NotFound();
+
+        return Ok();
+    }
 }

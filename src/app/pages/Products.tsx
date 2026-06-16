@@ -66,6 +66,22 @@ export function Products() {
       image: "",
       minimumStockLevel: 0,
     });
+  const filteredProducts = products.filter((product) => {
+    const search = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !search ||
+      product.name.toLowerCase().includes(search) ||
+      product.sku.toLowerCase().includes(search) ||
+      product.barcode.toLowerCase().includes(search);
+    const matchesCategory =
+      categoryFilter === "all" ||
+      product.category.toLowerCase() === categoryFilter.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
+  const categoryOptions = Array.from(
+    new Set(products.map((product) => product.category).filter(Boolean)),
+  ).sort();
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
@@ -203,14 +219,11 @@ export function Products() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="antibiotics">Antibiotics</SelectItem>
-              <SelectItem value="pain-relief">Pain Relief</SelectItem>
-              <SelectItem value="diabetes">Diabetes</SelectItem>
-              <SelectItem value="ppe">PPE</SelectItem>
-              <SelectItem value="hygiene">Hygiene</SelectItem>
-              <SelectItem value="vitamins">Vitamins</SelectItem>
-              <SelectItem value="beverages">Beverages</SelectItem>
-              <SelectItem value="dairy">Dairy</SelectItem>
+              {categoryOptions.map((category) => (
+                <SelectItem key={category} value={category.toLowerCase()}>
+                  {category}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -381,7 +394,7 @@ export function Products() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

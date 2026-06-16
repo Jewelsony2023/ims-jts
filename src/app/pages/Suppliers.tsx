@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Mail, Phone, MapPin, Package, Edit, Trash2, Star, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, Mail, Phone, MapPin, Package, Edit, Trash2, Star, Clock, CheckCircle2, Search } from "lucide-react";
 import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -37,6 +37,7 @@ type Supplier = {
 
 export function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
 
   const [editingId, setEditingId] =
@@ -151,7 +152,16 @@ export function Suppliers() {
     }
   };
 
-  const suppliersWithExtras = suppliers
+  const suppliersWithExtras = suppliers.filter((supplier) => {
+    const search = searchTerm.trim().toLowerCase();
+
+    return (
+      !search ||
+      supplier.name.toLowerCase().includes(search) ||
+      supplier.contact.toLowerCase().includes(search) ||
+      supplier.email.toLowerCase().includes(search)
+    );
+  });
 
   const totalProducts = suppliersWithExtras.reduce((sum, s) => sum + s.productsSupplied, 0);
   const avgRating = suppliersWithExtras.length > 0
@@ -252,6 +262,17 @@ export function Suppliers() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="relative w-full md:max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          type="text"
+          placeholder="Search suppliers by name, contact, or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 bg-white"
+        />
       </div>
 
       {/* View Toggle */}

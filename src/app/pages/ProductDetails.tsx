@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
+import axios from "axios";
 import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -24,6 +25,18 @@ interface Specification {
   attributeValue: string;
 }
 
+type Product = {
+  id: number;
+  image: string;
+  name: string;
+  sku: string;
+  barcode: string;
+  category: string;
+  description: string;
+  stock: number;
+  status: string;
+};
+
 const batches = [
   { batchId: "PB-001", batch: "BAT-2401", mfg: "2025-05-15", expiry: "2027-05-15", quantity: 280, costPrice: 45, sellingPrice: 50, createdDate: "2026-05-15", status: "Active" },
   { batchId: "PB-002", batch: "BAT-2402", mfg: "2025-04-20", expiry: "2027-04-20", quantity: 115, costPrice: 52, sellingPrice: 55, createdDate: "2026-04-20", status: "Active" },
@@ -42,12 +55,47 @@ const suppliers = [
 ];
 
 export function ProductDetails() {
-  const { id = "1" } = useParams();
+  const { id } = useParams();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isNotFound, setIsNotFound] = useState(false);
   const [specifications, setSpecifications] = useState<Specification[]>([
-    { specificationId: "spec-1", productId: id, attributeName: "Strength", attributeValue: "500mg" },
-    { specificationId: "spec-2", productId: id, attributeName: "Dosage Form", attributeValue: "Tablet" },
-    { specificationId: "spec-3", productId: id, attributeName: "Pack Size", attributeValue: "10" },
+    { specificationId: "spec-1", productId: id || "", attributeName: "Strength", attributeValue: "500mg" },
+    { specificationId: "spec-2", productId: id || "", attributeName: "Dosage Form", attributeValue: "Tablet" },
+    { specificationId: "spec-3", productId: id || "", attributeName: "Pack Size", attributeValue: "10" },
   ]);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) {
+        setIsNotFound(true);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setIsNotFound(false);
+
+      try {
+        const response = await axios.get<Product>(
+          `${import.meta.env.VITE_API_URL}/api/products/${id}`,
+        );
+
+        setProduct(response.data);
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setIsNotFound(true);
+          setProduct(null);
+        } else {
+          console.error(error);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
 
   const updateSpecification = (
     specificationId: string,
@@ -60,6 +108,53 @@ export function ProductDetails() {
       ),
     );
   };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "In Stock":
+        return <Badge className="mt-2 bg-emerald-100 text-emerald-700">In Stock</Badge>;
+      case "Low Stock":
+        return <Badge className="mt-2 bg-amber-100 text-amber-700">Low Stock</Badge>;
+      case "Expiring Soon":
+        return <Badge className="mt-2 bg-orange-100 text-orange-700">Expiring Soon</Badge>;
+      case "Expired":
+        return <Badge className="mt-2 bg-red-100 text-red-700">Expired</Badge>;
+      default:
+        return <Badge className="mt-2">{status}</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Link to="/products">
+          <Button variant="ghost" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Products
+          </Button>
+        </Link>
+        <Card className="border-none shadow-md">
+          <CardContent className="p-6 text-sm text-slate-600">Loading product...</CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isNotFound || !product) {
+    return (
+      <div className="space-y-6">
+        <Link to="/products">
+          <Button variant="ghost" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Products
+          </Button>
+        </Link>
+        <Card className="border-none shadow-md">
+          <CardContent className="p-6 text-sm text-slate-600">Product not found.</CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -74,20 +169,20 @@ export function ProductDetails() {
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <ImageWithFallback
-              src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
-              alt="Amoxicillin 500mg"
+              src={product.image || "missing-product-image"}
+              alt={product.name}
               className="mb-5 aspect-square w-full rounded-lg bg-slate-100 object-cover"
             />
             <div className="space-y-4">
               <div>
-                <h1 className="text-2xl font-bold text-slate-800">Amoxicillin 500mg</h1>
-                <Badge className="mt-2 bg-emerald-100 text-emerald-700">In Stock</Badge>
+                <h1 className="text-2xl font-bold text-slate-800">{product.name}</h1>
+                {getStatusBadge(product.status)}
               </div>
               {[
-                ["SKU", "MED-001"],
-                ["Barcode", "8901234567890"],
-                ["Category", "Antibiotics"],
-                ["Current Stock", "450 units"],
+                ["SKU", product.sku],
+                ["Barcode", product.barcode],
+                ["Category", product.category],
+                ["Current Stock", `${product.stock} units`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-slate-100 pb-2 text-sm">
                   <span className="text-slate-500">{label}</span>

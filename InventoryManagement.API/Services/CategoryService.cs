@@ -1,21 +1,16 @@
 using InventoryManagement.API.DTOs;
 using InventoryManagement.API.Interfaces.Repositories;
 using InventoryManagement.API.Interfaces.Services;
-using InventoryManagement.API.Models;
 
 namespace InventoryManagement.API.Services;
 
 public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
-    private readonly IAuditLogService _auditLogService;
 
-    public CategoryService(
-        ICategoryRepository categoryRepository,
-        IAuditLogService auditLogService)
+    public CategoryService(ICategoryRepository categoryRepository)
     {
         _categoryRepository = categoryRepository;
-        _auditLogService = auditLogService;
     }
 
     public Task<List<CategoryDto>> GetCategoriesAsync()
@@ -28,61 +23,22 @@ public class CategoryService : ICategoryService
         return _categoryRepository.GetCategoryByIdAsync(id);
     }
 
-    public async Task<int> CreateCategoryAsync(
+    public Task<int> CreateCategoryAsync(
         CategoryCreateDto category)
     {
-        var id = await _categoryRepository.CreateCategoryAsync(category);
-
-        await _auditLogService.LogAsync(new AuditLog
-        {
-            UserId = 1,
-            EntityName = "Category",
-            EntityId = id,
-            Action = "CREATE_CATEGORY",
-            CreatedAt = DateTime.UtcNow
-        });
-
-        return id;
+        return _categoryRepository.CreateCategoryAsync(category);
     }
 
-    public async Task<bool> UpdateCategoryAsync(
+    public Task<bool> UpdateCategoryAsync(
         int id,
         CategoryUpdateDto category)
     {
-        var updated = await _categoryRepository.UpdateCategoryAsync(id, category);
-
-        if (updated)
-        {
-            await _auditLogService.LogAsync(new AuditLog
-            {
-                UserId = 1,
-                EntityName = "Category",
-                EntityId = id,
-                Action = "UPDATE_CATEGORY",
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-
-        return updated;
+        return _categoryRepository.UpdateCategoryAsync(id, category);
     }
 
-    public async Task<bool> DeleteCategoryAsync(
+    public Task<bool> DeleteCategoryAsync(
         int id)
     {
-        var deleted = await _categoryRepository.DeleteCategoryAsync(id);
-
-        if (deleted)
-        {
-            await _auditLogService.LogAsync(new AuditLog
-            {
-                UserId = 1,
-                EntityName = "Category",
-                EntityId = id,
-                Action = "DELETE_CATEGORY",
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-
-        return deleted;
+        return _categoryRepository.DeleteCategoryAsync(id);
     }
 }

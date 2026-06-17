@@ -34,7 +34,6 @@ export const navItems = [
   { icon: ShoppingCart, label: "Purchase Orders", path: "/purchase-orders" },
   { icon: FolderTree, label: "Categories", path: "/categories" },
   { icon: Users, label: "Suppliers", path: "/suppliers" },
-  { icon: FileText, label: "Audit Logs", path: "/audit-logs" },
   { icon: UserCog, label: "User Management", path: "/users" },
   { icon: UserCircle, label: "Profile", path: "/profile" },
   { icon: Settings, label: "Settings", path: "/settings" },

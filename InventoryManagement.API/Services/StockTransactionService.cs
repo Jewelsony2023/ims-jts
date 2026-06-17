@@ -11,16 +11,13 @@ public class StockTransactionService : IStockTransactionService
 {
     private readonly IStockTransactionRepository _stockTransactionRepository;
     private readonly InventoryDbContext _context;
-    private readonly IAuditLogService _auditLogService;
 
     public StockTransactionService(
         IStockTransactionRepository stockTransactionRepository,
-        InventoryDbContext context,
-        IAuditLogService auditLogService)
+        InventoryDbContext context)
     {
         _stockTransactionRepository = stockTransactionRepository;
         _context = context;
-        _auditLogService = auditLogService;
     }
 
     public Task<List<StockTransactionDto>> GetInventoryAsync()
@@ -33,20 +30,9 @@ public class StockTransactionService : IStockTransactionService
         return _stockTransactionRepository.GetProductBatchByIdAsync(productBatchId);
     }
 
-    public async Task<int> ProcessStockInAsync(StockInRequestDto request, int userId)
+    public Task<int> ProcessStockInAsync(StockInRequestDto request, int userId)
     {
-        var transactionId = await _stockTransactionRepository.ProcessStockInAsync(request, userId);
-
-        await _auditLogService.LogAsync(new AuditLog
-        {
-            UserId = 1,
-            EntityName = "StockTransaction",
-            EntityId = transactionId,
-            Action = "STOCK_IN",
-            CreatedAt = DateTime.UtcNow
-        });
-
-        return transactionId;
+        return _stockTransactionRepository.ProcessStockInAsync(request, userId);
     }
 
     public async Task<bool> ProcessStockOutAsync(StockOutRequestDto request, int userId)
@@ -105,14 +91,6 @@ public class StockTransactionService : IStockTransactionService
 
 
         await _context.SaveChangesAsync();
-        await _auditLogService.LogAsync(new AuditLog
-        {
-            UserId = 1,
-            EntityName = "StockTransaction",
-            EntityId = header.StockTransactionHeaderId,
-            Action = "STOCK_OUT",
-            CreatedAt = DateTime.UtcNow
-        });
         return true;
     }
 

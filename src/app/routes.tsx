@@ -11,7 +11,6 @@ import { PurchaseOrders } from "./pages/PurchaseOrders";
 import { StockIn } from "./pages/StockIn";
 import { StockOut } from "./pages/StockOut";
 import { Inventory } from "./pages/Inventory";
-import { AuditLogs } from "./pages/AuditLogs";
 import { UserManagement } from "./pages/UserManagement";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
@@ -36,7 +35,6 @@ export const router = createBrowserRouter([
           { path: "stock-in", Component: StockIn },
           { path: "stock-out", Component: StockOut },
           { path: "inventory", Component: Inventory },
-          { path: "audit-logs", Component: AuditLogs },
           { path: "users", Component: UserManagement },
         ],
       },

@@ -1,21 +1,16 @@
 using InventoryManagement.API.DTOs;
 using InventoryManagement.API.Interfaces.Repositories;
 using InventoryManagement.API.Interfaces.Services;
-using InventoryManagement.API.Models;
 
 namespace InventoryManagement.API.Services;
 
 public class ProductService : IProductService
 {
     private readonly IProductRepository _productRepository;
-    private readonly IAuditLogService _auditLogService;
 
-    public ProductService(
-        IProductRepository productRepository,
-        IAuditLogService auditLogService)
+    public ProductService(IProductRepository productRepository)
     {
         _productRepository = productRepository;
-        _auditLogService = auditLogService;
     }
 
     public Task<List<ProductDto>> GetProductsAsync()
@@ -38,61 +33,25 @@ public class ProductService : IProductService
         return _productRepository.GetProductBatchesAsync();
     }
 
-    public async Task<int> CreateProductAsync(
+    public Task<int> CreateProductAsync(
         ProductCreateDto product)
     {
-        var id = await _productRepository.CreateProductAsync(product);
-
-        await _auditLogService.LogAsync(new AuditLog
-        {
-            UserId = 1,
-            EntityName = "Product",
-            EntityId = id,
-            Action = "CREATE_PRODUCT",
-            CreatedAt = DateTime.UtcNow
-        });
-
-        return id;
+        return _productRepository
+            .CreateProductAsync(product);
     }
 
-    public async Task<bool> UpdateProductAsync(
+    public Task<bool> UpdateProductAsync(
         int id,
         ProductUpdateDto product)
     {
-        var updated = await _productRepository.UpdateProductAsync(id, product);
-
-        if (updated)
-        {
-            await _auditLogService.LogAsync(new AuditLog
-            {
-                UserId = 1,
-                EntityName = "Product",
-                EntityId = id,
-                Action = "UPDATE_PRODUCT",
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-
-        return updated;
+        return _productRepository
+            .UpdateProductAsync(id, product);
     }
 
-    public async Task<bool> DeleteProductAsync(
+    public Task<bool> DeleteProductAsync(
         int id)
     {
-        var deleted = await _productRepository.DeleteProductAsync(id);
-
-        if (deleted)
-        {
-            await _auditLogService.LogAsync(new AuditLog
-            {
-                UserId = 1,
-                EntityName = "Product",
-                EntityId = id,
-                Action = "DELETE_PRODUCT",
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-
-        return deleted;
+        return _productRepository
+            .DeleteProductAsync(id);
     }
 }

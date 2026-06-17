@@ -108,8 +108,15 @@ export function StockIn() {
   const fetchRecentActivity = async () => {
     setActivityLoading(true);
     try {
+      const token = localStorage.getItem("token");
+
       const response = await axios.get<StockActivity[]>(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/recent-stock-in`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setActivities(response.data);
     } catch (error) {

@@ -35,8 +35,6 @@ export const navItems = [
   { icon: FolderTree, label: "Categories", path: "/categories" },
   { icon: Users, label: "Suppliers", path: "/suppliers" },
   { icon: UserCog, label: "User Management", path: "/users" },
-  { icon: UserCircle, label: "Profile", path: "/profile" },
-  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 function isItemActive(pathname: string, item: (typeof navItems)[number]) {

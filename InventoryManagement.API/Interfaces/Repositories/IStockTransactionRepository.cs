@@ -10,6 +10,10 @@ public interface IStockTransactionRepository
 
     Task<int> ProcessStockInAsync(StockInRequestDto request, int userId);
 
+    Task<List<StockActivityDto>> GetRecentStockInAsync();
+
+    Task<List<StockActivityDto>> GetRecentStockOutAsync();
+
     Task<Dictionary<int, int>> GetCurrentStockByProductBatchIdsAsync(
         IEnumerable<int> productBatchIds);
 

@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2, History } from "lucide-react";
 import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -20,6 +27,17 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
+
+type StockActivity = {
+  createdAt: string;
+  transactionType: string;
+  productName: string;
+  batchNumber: string;
+  quantity: number;
+  userName: string;
+  reference: string;
+  supplierOrIssuedTo: string;
+};
 
 interface StockOutRow {
   id: number;
@@ -67,6 +85,9 @@ export function StockOut() {
   const [batchOptions, setBatchOptions] = useState<ProductBatchOption[]>([]);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activities, setActivities] = useState<StockActivity[]>([]);
 
   const fetchBatchData = async () => {
     const response = await axios.get<ProductBatchOption[]>(
@@ -79,6 +100,21 @@ export function StockOut() {
   useEffect(() => {
     fetchBatchData().catch(console.error);
   }, []);
+
+  const fetchRecentActivity = async () => {
+    setActivityLoading(true);
+    try {
+      const response = await axios.get<StockActivity[]>(
+        `${import.meta.env.VITE_API_URL}/api/stocktransactions/recent-stock-out`,
+      );
+      setActivities(response.data);
+    } catch (error) {
+      console.error(error);
+      setActivities([]);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
 
   const updateRow = (id: number, key: keyof StockOutRow, value: string | number) => {
     setRows((current) =>
@@ -327,10 +363,23 @@ export function StockOut() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="outline" className="bg-white" onClick={() => setRows((current) => [...current, createRow(Date.now())])}>
-              <Plus className="h-4 w-4" />
-              Add Row
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" className="bg-white" onClick={() => setRows((current) => [...current, createRow(Date.now())])}>
+                <Plus className="h-4 w-4" />
+                Add Row
+              </Button>
+              <Button
+                variant="outline"
+                className="bg-white"
+                onClick={() => {
+                  setActivityOpen(true);
+                  fetchRecentActivity();
+                }}
+              >
+                <History className="h-4 w-4" />
+                Recent Activity
+              </Button>
+            </div>
             <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleSubmit}>
               <Save className="h-4 w-4" />
               Submit Transaction
@@ -338,6 +387,52 @@ export function StockOut() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Recent Stock Out Activity</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded-lg border border-slate-200">
+            {activityLoading ? (
+              <div className="p-6 text-slate-600">Loading recent activity...</div>
+            ) : activities.length === 0 ? (
+              <div className="p-6 text-slate-600">No recent activity found.</div>
+            ) : (
+              <table className="w-full">
+                <thead className="sticky top-0 bg-slate-50">
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Reference</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Product</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Batch</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Quantity</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Issued To</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">User</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activities.map((activity, index) => (
+                    <tr key={`${activity.reference}-${index}`} className="border-b border-slate-100">
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {new Date(activity.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className="bg-slate-100 text-slate-700">{activity.reference}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-800">{activity.productName}</td>
+                      <td className="px-4 py-3 font-mono text-sm text-slate-600">{activity.batchNumber}</td>
+                      <td className="px-4 py-3 text-sm text-slate-800">{activity.quantity}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{activity.supplierOrIssuedTo}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{activity.userName}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

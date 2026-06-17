@@ -159,6 +159,60 @@ public class StockTransactionRepository : IStockTransactionRepository
         return header.StockTransactionHeaderId;
     }
 
+    public async Task<List<StockActivityDto>> GetRecentStockInAsync()
+    {
+        return await _context.StockTransactionItems
+            .AsNoTracking()
+            .Where(item => item.TransactionType == "StockIn" && item.StockTransactionHeader != null)
+            .OrderByDescending(item => item.StockTransactionHeader!.CreatedAt)
+            .ThenByDescending(item => item.StockTransactionItemId)
+            .Select(item => new StockActivityDto
+            {
+                CreatedAt = item.StockTransactionHeader!.CreatedAt,
+                TransactionType = item.TransactionType,
+                ProductName = item.Product != null ? item.Product.ProductName : string.Empty,
+                BatchNumber = item.ProductBatch != null ? item.ProductBatch.BatchNumber : string.Empty,
+                Quantity = item.Quantity,
+                UserName = item.StockTransactionHeader!.User != null
+                    ? (string.IsNullOrWhiteSpace(item.StockTransactionHeader.User.FullName)
+                        ? item.StockTransactionHeader.User.Username
+                        : item.StockTransactionHeader.User.FullName)
+                    : string.Empty,
+                Reference = item.StockTransactionHeader!.InvoiceNumber,
+                SupplierOrIssuedTo = item.ProductBatch != null && item.ProductBatch.Supplier != null
+                    ? item.ProductBatch.Supplier.SupplierName
+                    : string.Empty
+            })
+            .Take(20)
+            .ToListAsync();
+    }
+
+    public async Task<List<StockActivityDto>> GetRecentStockOutAsync()
+    {
+        return await _context.StockTransactionItems
+            .AsNoTracking()
+            .Where(item => item.TransactionType == "StockOut" && item.StockTransactionHeader != null)
+            .OrderByDescending(item => item.StockTransactionHeader!.CreatedAt)
+            .ThenByDescending(item => item.StockTransactionItemId)
+            .Select(item => new StockActivityDto
+            {
+                CreatedAt = item.StockTransactionHeader!.CreatedAt,
+                TransactionType = item.TransactionType,
+                ProductName = item.Product != null ? item.Product.ProductName : string.Empty,
+                BatchNumber = item.ProductBatch != null ? item.ProductBatch.BatchNumber : string.Empty,
+                Quantity = item.Quantity,
+                UserName = item.StockTransactionHeader!.User != null
+                    ? (string.IsNullOrWhiteSpace(item.StockTransactionHeader.User.FullName)
+                        ? item.StockTransactionHeader.User.Username
+                        : item.StockTransactionHeader.User.FullName)
+                    : string.Empty,
+                Reference = item.StockTransactionHeader!.InvoiceNumber,
+                SupplierOrIssuedTo = item.StockTransactionHeader!.Notes ?? string.Empty
+            })
+            .Take(20)
+            .ToListAsync();
+    }
+
     public async Task<Dictionary<int, int>> GetCurrentStockByProductBatchIdsAsync(IEnumerable<int> productBatchIds)
     {
         return await _context.ProductBatches

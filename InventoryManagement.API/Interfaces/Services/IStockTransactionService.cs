@@ -12,6 +12,10 @@ public interface IStockTransactionService
 
     Task<bool> ProcessStockOutAsync(StockOutRequestDto request, int userId);
 
+    Task<List<StockActivityDto>> GetRecentStockInAsync();
+
+    Task<List<StockActivityDto>> GetRecentStockOutAsync();
+
     Task<BatchDetailsDto?> GetBatchDetailsAsync(
         int productId,
         string batchNumber);

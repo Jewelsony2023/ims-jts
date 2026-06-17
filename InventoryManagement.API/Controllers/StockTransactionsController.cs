@@ -31,6 +31,20 @@ public class StockTransactionsController : ControllerBase
         return Ok(inventory);
     }
 
+    [HttpGet("recent-stock-in")]
+    public async Task<IActionResult> GetRecentStockIn()
+    {
+        var logs = await _stockTransactionService.GetRecentStockInAsync();
+        return Ok(logs);
+    }
+
+    [HttpGet("recent-stock-out")]
+    public async Task<IActionResult> GetRecentStockOut()
+    {
+        var logs = await _stockTransactionService.GetRecentStockOutAsync();
+        return Ok(logs);
+    }
+
     [HttpPost("stock-in")]
     public async Task<IActionResult> StockIn([FromBody] StockInRequestDto request)
     {

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import axios from "axios";
 import { Plus, Search, Filter, Edit, Trash2, Eye, Upload } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -44,12 +43,16 @@ type Product = {
   status: string;
 };
 
+type ProductDetails = Product;
+
 export function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [open, setOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [selectedProduct, setSelectedProduct] = useState<ProductDetails | null>(null);
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -473,11 +476,16 @@ export function Products() {
                   <TableCell>{getStatusBadge(product.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
-                      <Link to={`/products/${product.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="w-4 h-4 text-blue-600" />
-                        </Button>
-                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setDetailsOpen(true);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 text-blue-600" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => {
                         setErrors({});
                         setEditingId(product.id);
@@ -509,6 +517,57 @@ export function Products() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Product Details</DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="grid gap-4 md:grid-cols-[160px_1fr]">
+              <ImageWithFallback
+                src={selectedProduct.image || "missing-product-image"}
+                alt={selectedProduct.name}
+                className="h-40 w-full rounded-lg object-cover bg-slate-100"
+              />
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-slate-500">Product Name</p>
+                  <p className="font-semibold text-slate-800">{selectedProduct.name}</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-slate-500">SKU</p>
+                    <p className="font-mono text-sm text-slate-800">{selectedProduct.sku}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Barcode</p>
+                    <p className="font-mono text-sm text-slate-800">{selectedProduct.barcode}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Category</p>
+                    <p className="text-sm text-slate-800">{selectedProduct.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Current Stock</p>
+                    <p className="text-sm text-slate-800">{selectedProduct.stock}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Status</p>
+                  {getStatusBadge(selectedProduct.status)}
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Description</p>
+                  <p className="text-sm text-slate-700">
+                    {selectedProduct.description || "No description available."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

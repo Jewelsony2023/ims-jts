@@ -4,7 +4,6 @@ import { Register } from "./pages/Register";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { Dashboard } from "./pages/Dashboard";
 import { Products } from "./pages/Products";
-import { ProductDetails } from "./pages/ProductDetails";
 import { Categories } from "./pages/Categories";
 import { Suppliers } from "./pages/Suppliers";
 import { PurchaseOrders } from "./pages/PurchaseOrders";
@@ -28,7 +27,6 @@ export const router = createBrowserRouter([
         children: [
           { index: true, Component: Dashboard },
           { path: "products", Component: Products },
-          { path: "products/:id", Component: ProductDetails },
           { path: "categories", Component: Categories },
           { path: "suppliers", Component: Suppliers },
           { path: "purchase-orders", Component: PurchaseOrders },

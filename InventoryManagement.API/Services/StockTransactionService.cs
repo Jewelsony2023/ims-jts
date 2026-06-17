@@ -35,6 +35,16 @@ public class StockTransactionService : IStockTransactionService
         return _stockTransactionRepository.ProcessStockInAsync(request, userId);
     }
 
+    public Task<List<StockActivityDto>> GetRecentStockInAsync()
+    {
+        return _stockTransactionRepository.GetRecentStockInAsync();
+    }
+
+    public Task<List<StockActivityDto>> GetRecentStockOutAsync()
+    {
+        return _stockTransactionRepository.GetRecentStockOutAsync();
+    }
+
     public async Task<bool> ProcessStockOutAsync(StockOutRequestDto request, int userId)
     {
         var productBatchIds = request.Items.Select(i => i.ProductBatchId).ToList();

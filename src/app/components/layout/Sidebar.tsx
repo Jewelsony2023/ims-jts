@@ -7,7 +7,7 @@ import {
   Package,
   PackageCheck,
   Settings,
-  ShoppingCart,
+
   TrendingDown,
   TrendingUp,
   UserCircle,
@@ -31,7 +31,7 @@ export const navItems = [
     ],
   },
   { icon: Package, label: "Products", path: "/products" },
-  { icon: ShoppingCart, label: "Purchase Orders", path: "/purchase-orders" },
+
   { icon: FolderTree, label: "Categories", path: "/categories" },
   { icon: Users, label: "Suppliers", path: "/suppliers" },
   { icon: UserCog, label: "User Management", path: "/users" },

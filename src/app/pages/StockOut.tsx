@@ -45,6 +45,7 @@ interface StockOutRow {
   productBatchId: number;
   product: string;
   batch: string;
+  expiryDate: string;
   availableQuantity: number;
   batchCostPrice: number;
   batchSellingPrice: number;
@@ -67,18 +68,39 @@ type ProductBatchOption = {
   supplierName: string;
 };
 
+type ExpiryStatus = "Good" | "Expiring Soon" | "Expired";
+
 const createRow = (id: number): StockOutRow => ({
   id,
   productId: 0,
   productBatchId: 0,
   product: "",
   batch: "",
+  expiryDate: "",
   availableQuantity: 0,
   batchCostPrice: 0,
   batchSellingPrice: 0,
   transactionSellingPrice: "",
-  quantityToIssue: ""
+  quantityToIssue: "",
 });
+
+const getDaysRemaining = (expiryDate: string) => {
+  if (!expiryDate) return null;
+
+  const today = new Date();
+  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const expiry = new Date(`${expiryDate}T00:00:00`);
+
+  return Math.floor((expiry.getTime() - current.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const getExpiryStatus = (expiryDate: string): ExpiryStatus | null => {
+  const daysRemaining = getDaysRemaining(expiryDate);
+  if (daysRemaining === null) return null;
+  if (daysRemaining < 0) return "Expired";
+  if (daysRemaining <= 30) return "Expiring Soon";
+  return "Good";
+};
 
 export function StockOut() {
   const [rows, setRows] = useState<StockOutRow[]>([createRow(1), createRow(2)]);
@@ -88,6 +110,20 @@ export function StockOut() {
   const [activityOpen, setActivityOpen] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activities, setActivities] = useState<StockActivity[]>([]);
+
+  const rowsWithExpiryStatus = rows.map((row) => ({
+    ...row,
+    daysRemaining: getDaysRemaining(row.expiryDate),
+    expiryStatus: getExpiryStatus(row.expiryDate),
+  }));
+  const hasExpiredSelectedBatch = rowsWithExpiryStatus.some(
+    (row) => row.productBatchId > 0 && row.expiryStatus === "Expired"
+  );
+  const expiryWarnings = rowsWithExpiryStatus.filter(
+    (row) =>
+      row.productBatchId > 0 &&
+      (row.expiryStatus === "Expired" || row.expiryStatus === "Expiring Soon")
+  );
 
   const fetchBatchData = async () => {
     const response = await axios.get<ProductBatchOption[]>(
@@ -129,54 +165,47 @@ export function StockOut() {
     );
   };
 
-
   const handleSubmit = async () => {
     const selectedBatches = rows
-      .filter(r => r.productBatchId > 0)
-      .map(r => r.productBatchId);
+      .filter((r) => r.productBatchId > 0)
+      .map((r) => r.productBatchId);
 
-    if (
-      selectedBatches.length !==
-      new Set(selectedBatches).size
-    ) {
+    if (selectedBatches.length !== new Set(selectedBatches).size) {
       setIsError(true);
       setMessage("Duplicate batches are not allowed.");
       return;
     }
+
     for (const row of rows) {
-      if (
-        Number(row.quantityToIssue) >
-        row.availableQuantity
-      ) {
+      if (Number(row.quantityToIssue) > row.availableQuantity) {
         setIsError(true);
-
-        setMessage(
-          `Cannot issue more than available stock for ${row.product}`
-        );
-
+        setMessage(`Cannot issue more than available stock for ${row.product}`);
         return;
       }
     }
+
     const requestData = {
-      ReferenceNumber: (document.getElementById("reference") as HTMLInputElement)?.value || undefined,
-      IssuedTo: (document.getElementById("issuedTo") as HTMLInputElement)?.value || undefined,
+      ReferenceNumber:
+        (document.getElementById("reference") as HTMLInputElement)?.value || undefined,
+      IssuedTo:
+        (document.getElementById("issuedTo") as HTMLInputElement)?.value || undefined,
       Items: rows
-        .filter(row => row.productBatchId > 0 && row.quantityToIssue)
-        .map(row => ({
+        .filter((row) => row.productBatchId > 0 && row.quantityToIssue)
+        .map((row) => ({
           ProductId: row.productId,
           ProductBatchId: row.productBatchId,
           Quantity: parseInt(row.quantityToIssue) || 0,
-          SellingPrice: parseFloat(row.transactionSellingPrice) || row.batchSellingPrice
-        }))
+          SellingPrice: parseFloat(row.transactionSellingPrice) || row.batchSellingPrice,
+        })),
     };
 
     try {
-
       const token = localStorage.getItem("token");
 
       console.log("STOCK OUT REQUEST");
       console.log(JSON.stringify(requestData, null, 2));
-
+      console.log("TOKEN:", token);
+      console.log("REQUEST:", requestData);
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-out`,
         requestData,
@@ -188,31 +217,17 @@ export function StockOut() {
       );
 
       setIsError(false);
-
-      setMessage(
-        "Stock Out completed successfully."
-      );
-
+      setMessage("Stock Out completed successfully.");
       await fetchBatchData();
-
       setRows([createRow(1), createRow(2)]);
-
       console.log(response.data);
-
     } catch (error: any) {
-
-        console.log("FULL ERROR RESPONSE");
-        console.log(JSON.stringify(error.response?.data, null, 2));
-
-        console.error(error);
-
-        setIsError(true);
-
-        setMessage(
-          error?.response?.data?.message ??
-          "Stock Out failed."
-        );
-      }
+      console.log("FULL ERROR RESPONSE");
+      console.log(JSON.stringify(error.response?.data, null, 2));
+      console.error(error);
+      setIsError(true);
+      setMessage(error?.response?.data?.message ?? "Stock Out failed.");
+    }
   };
 
   return (
@@ -262,6 +277,7 @@ export function StockOut() {
                   <TableHead className="min-w-[220px]">Product</TableHead>
                   <TableHead className="min-w-[180px]">Batch</TableHead>
                   <TableHead className="min-w-[150px]">Available Quantity</TableHead>
+                  <TableHead className="min-w-[190px]">Expiry Status</TableHead>
                   <TableHead className="min-w-[140px]">Batch Cost Price</TableHead>
                   <TableHead className="min-w-[150px]">Batch Selling Price</TableHead>
                   <TableHead className="min-w-[170px]">Final Selling Price</TableHead>
@@ -273,34 +289,36 @@ export function StockOut() {
                 {rows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
-                      <Select value={row.product} onValueChange={(value) => {
-                        const selected = batchOptions.find((item) => item.productName === value);
-                        updateRow(row.id, "product", value);
-                        updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
-                        updateRow(row.id, "batch", selected?.batchNumber ?? "");
-                        updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
-                        updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
-                        updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
-                        updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
-                        updateRow(row.id, "productId", selected?.productId ?? 0);
-                      }}>
+                      <Select
+                        value={row.product}
+                        onValueChange={(value) => {
+                          const selected = batchOptions.find((item) => item.productName === value);
+                          updateRow(row.id, "product", value);
+                          updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
+                          updateRow(row.id, "batch", selected?.batchNumber ?? "");
+                          updateRow(row.id, "expiryDate", selected?.expiryDate ?? "");
+                          updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
+                          updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
+                          updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
+                          updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
+                          updateRow(row.id, "productId", selected?.productId ?? 0);
+                        }}
+                      >
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
                           {[...new Set(batchOptions.map((item) => item.productName))].map((product) => (
-                            <SelectItem key={product} value={product}>{product}</SelectItem>
+                            <SelectItem key={product} value={product}>
+                              {product}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={
-                          row.productBatchId
-                            ? row.productBatchId.toString()
-                            : ""
-                        }
+                        value={row.productBatchId ? row.productBatchId.toString() : ""}
                         onValueChange={(value) => {
                           const selected = batchOptions.find(
                             (item) => item.productBatchId === parseInt(value)
@@ -308,14 +326,11 @@ export function StockOut() {
 
                           updateRow(row.id, "batch", selected?.batchNumber ?? "");
                           updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
+                          updateRow(row.id, "expiryDate", selected?.expiryDate ?? "");
                           updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
                           updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
                           updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
-                          updateRow(
-                            row.id,
-                            "transactionSellingPrice",
-                            String(selected?.sellingPrice ?? "")
-                          );
+                          updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
                           updateRow(row.id, "productId", selected?.productId ?? 0);
                         }}
                       >
@@ -326,9 +341,7 @@ export function StockOut() {
                           {batchOptions
                             .filter((item) => {
                               const alreadySelected = rows.some(
-                                (r) =>
-                                  r.id !== row.id &&
-                                  r.productBatchId === item.productBatchId
+                                (r) => r.id !== row.id && r.productBatchId === item.productBatchId
                               );
 
                               return (
@@ -337,10 +350,7 @@ export function StockOut() {
                               );
                             })
                             .map((item) => (
-                              <SelectItem
-                                key={item.productBatchId}
-                                value={item.productBatchId.toString()}
-                              >
+                              <SelectItem key={item.productBatchId} value={item.productBatchId.toString()}>
                                 {item.batchNumber}
                               </SelectItem>
                             ))}
@@ -350,16 +360,63 @@ export function StockOut() {
                     <TableCell className="font-semibold text-slate-800">
                       {row.availableQuantity.toLocaleString()}
                     </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const daysRemaining = getDaysRemaining(row.expiryDate);
+                        const status = getExpiryStatus(row.expiryDate);
+
+                        if (!status || daysRemaining === null) {
+                          return <span className="text-sm text-slate-400">-</span>;
+                        }
+
+                        if (status === "Good") {
+                          return (
+                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                              Good
+                            </Badge>
+                          );
+                        }
+
+                        if (status === "Expiring Soon") {
+                          return (
+                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                              Expiring Soon ({daysRemaining} days left)
+                            </Badge>
+                          );
+                        }
+
+                        return (
+                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                            Expired ({Math.abs(daysRemaining)} days overdue)
+                          </Badge>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="font-semibold text-slate-800">₹{row.batchCostPrice.toFixed(2)}</TableCell>
                     <TableCell className="font-semibold text-slate-800">₹{row.batchSellingPrice.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Input type="number" step="0.01" value={row.transactionSellingPrice} onChange={(event) => updateRow(row.id, "transactionSellingPrice", event.target.value)} className="bg-white" />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={row.transactionSellingPrice}
+                        onChange={(event) => updateRow(row.id, "transactionSellingPrice", event.target.value)}
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Input type="number" value={row.quantityToIssue} onChange={(event) => updateRow(row.id, "quantityToIssue", event.target.value)} className="bg-white" />
+                      <Input
+                        type="number"
+                        value={row.quantityToIssue}
+                        onChange={(event) => updateRow(row.id, "quantityToIssue", event.target.value)}
+                        className="bg-white"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}
+                      >
                         <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </TableCell>
@@ -369,9 +426,36 @@ export function StockOut() {
             </Table>
           </div>
 
+          {expiryWarnings.length > 0 && (
+            <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <div className="font-medium">Expiry warning</div>
+              <ul className="space-y-1">
+                {expiryWarnings.map((row) => {
+                  const daysRemaining = getDaysRemaining(row.expiryDate) ?? 0;
+                  const label =
+                    row.expiryStatus === "Expired"
+                      ? `${row.product || "Selected batch"} is expired (${Math.abs(daysRemaining)} days overdue).`
+                      : `${row.product || "Selected batch"} is expiring soon (${daysRemaining} days left).`;
+
+                  return <li key={row.id}>{label}</li>;
+                })}
+              </ul>
+            </div>
+          )}
+
+          {hasExpiredSelectedBatch && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+              Expired inventory cannot be issued.
+            </div>
+          )}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-3">
-              <Button variant="outline" className="bg-white" onClick={() => setRows((current) => [...current, createRow(Date.now())])}>
+              <Button
+                variant="outline"
+                className="bg-white"
+                onClick={() => setRows((current) => [...current, createRow(Date.now())])}
+              >
                 <Plus className="h-4 w-4" />
                 Add Row
               </Button>
@@ -387,7 +471,11 @@ export function StockOut() {
                 Recent Activity
               </Button>
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleSubmit}>
+            <Button
+              className="bg-orange-500 hover:bg-orange-600"
+              onClick={handleSubmit}
+              disabled={hasExpiredSelectedBatch}
+            >
               <Save className="h-4 w-4" />
               Submit Transaction
             </Button>

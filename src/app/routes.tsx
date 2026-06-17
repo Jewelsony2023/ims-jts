@@ -6,7 +6,6 @@ import { Dashboard } from "./pages/Dashboard";
 import { Products } from "./pages/Products";
 import { Categories } from "./pages/Categories";
 import { Suppliers } from "./pages/Suppliers";
-import { PurchaseOrders } from "./pages/PurchaseOrders";
 import { StockIn } from "./pages/StockIn";
 import { StockOut } from "./pages/StockOut";
 import { Inventory } from "./pages/Inventory";
@@ -29,7 +28,6 @@ export const router = createBrowserRouter([
           { path: "products", Component: Products },
           { path: "categories", Component: Categories },
           { path: "suppliers", Component: Suppliers },
-          { path: "purchase-orders", Component: PurchaseOrders },
           { path: "stock-in", Component: StockIn },
           { path: "stock-out", Component: StockOut },
           { path: "inventory", Component: Inventory },

@@ -26,6 +26,7 @@ import {
 } from "recharts";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Skeleton } from "../components/ui/skeleton";
 
 
 
@@ -142,54 +143,57 @@ export function Dashboard() {
 
   const [inventoryValue, setInventoryValue] =
     useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const [
-        statsRes,
-        activityRes,
-        alertsRes,
-        stockMovementRes,
-        revenueTrendRes,
-        inventoryValueRes
-      ] = await Promise.all([
-        axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard/stats`
-        ),
+      try {
+        const [
+          statsRes,
+          activityRes,
+          alertsRes,
+          stockMovementRes,
+          revenueTrendRes,
+          inventoryValueRes
+        ] = await Promise.all([
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/dashboard/stats`
+          ),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/dashboard/activity-feed`
+          ),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/dashboard/alerts`
+          ),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/dashboard/stock-movement`
+          ),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/dashboard/revenue-trend?view=${revenueView}`
+          ),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/dashboard/inventory-value-trend`
+          )
+        ]);
 
-        axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard/activity-feed`
-        ),
-
-        axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard/alerts`
-        ),
-
-        axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard/stock-movement`
-        ),
-
-        axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard/revenue-trend?view=${revenueView}`
-        ),
-
-        axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard/inventory-value-trend`
-        )
-      ]);
-
-      setDashboardStats(statsRes.data);
-      setActivityFeed(activityRes.data);
-      setDashboardAlerts(alertsRes.data);
-      setStockMovementData(stockMovementRes.data);
-
-
-      setRevenueTrend(revenueTrendRes.data);
-
-      setInventoryValue(inventoryValueRes.data);
+        setDashboardStats(statsRes.data);
+        setActivityFeed(activityRes.data);
+        setDashboardAlerts(alertsRes.data);
+        setStockMovementData(stockMovementRes.data);
+        setRevenueTrend(revenueTrendRes.data);
+        setInventoryValue(inventoryValueRes.data);
+      }
+      catch (error) {
+        console.error(error);
+      }
+      finally {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1500);
+      }
     };
 
-    fetchDashboardData().catch(console.error);
+    fetchDashboardData();
   }, [revenueView]);
     const dashboardKpiData = kpiData.map((kpi) => {
       if (kpi.title === "Revenue") {
@@ -251,12 +255,34 @@ export function Dashboard() {
                   <div className={`${kpi.color} rounded-lg p-3`}>
                     <Icon className="h-5 w-5 text-white" />
                   </div>
-                  <Badge className={kpi.positive ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}>
-                    {kpi.trend}
-                  </Badge>
+                  {isLoading ? (
+                    <Skeleton className="h-6 w-14" />
+                  ) : (
+                    <Badge
+                      className={
+                        kpi.positive
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-red-100 text-red-700"
+                      }
+                    >
+                      {kpi.trend}
+                    </Badge>
+                  )}
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800">{kpi.value}</h3>
-                <p className="text-sm text-slate-500">{kpi.title}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    {kpi.value}
+                  </h3>
+                )}
+                {isLoading ? (
+                  <Skeleton className="mt-2 h-4 w-20" />
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    {kpi.title}
+                  </p>
+                )}
               </CardContent>
             </Card>
           );

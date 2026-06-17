@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router";
-import { Bell, LogOut, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import {
@@ -58,10 +58,7 @@ export function Header({ onToggleMenu }: HeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5 text-slate-600" />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-          </Button>
+
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

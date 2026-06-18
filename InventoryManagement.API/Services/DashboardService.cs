@@ -26,6 +26,9 @@ public class DashboardService : IDashboardService
             TotalSuppliers =
                 await _dashboardRepository.GetTotalSuppliersAsync(),
 
+            InactiveSuppliers =
+                await _dashboardRepository.GetInactiveSuppliersAsync(),
+
             LowStockItems =
                 await _dashboardRepository.GetLowStockItemsAsync(),
 

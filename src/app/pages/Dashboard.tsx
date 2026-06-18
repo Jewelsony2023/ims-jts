@@ -11,7 +11,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
-import axios from "axios";
+import api from "../../lib/api";
 import {
   Bar,
   BarChart,
@@ -75,6 +75,14 @@ const kpiData = [
     color: "bg-purple-500",
   },
   {
+    title: "Inactive Suppliers",
+    value: "0",
+    trend: "+0",
+    positive: false,
+    icon: XCircle,
+    color: "bg-slate-500",
+  },
+  {
     title: "Total Users",
     value: "0",
     trend: "+0",
@@ -91,6 +99,7 @@ type DashboardStats = {
   totalUsers: number;
   totalProducts: number;
   totalSuppliers: number;
+  inactiveSuppliers: number;
   lowStockItems: number;
   inventoryValue: number;
   revenue: number;
@@ -118,6 +127,7 @@ export function Dashboard() {
       totalUsers: 0,
       totalProducts: 0,
       totalSuppliers: 0,
+      inactiveSuppliers: 0,
       lowStockItems: 0,
       inventoryValue: 0,
       revenue: 0,
@@ -156,22 +166,22 @@ export function Dashboard() {
           revenueTrendRes,
           inventoryValueRes
         ] = await Promise.all([
-          axios.get(
+          api.get(
             `${import.meta.env.VITE_API_URL}/api/dashboard/stats`
           ),
-          axios.get(
+          api.get(
             `${import.meta.env.VITE_API_URL}/api/dashboard/activity-feed`
           ),
-          axios.get(
+          api.get(
             `${import.meta.env.VITE_API_URL}/api/dashboard/alerts`
           ),
-          axios.get(
+          api.get(
             `${import.meta.env.VITE_API_URL}/api/dashboard/stock-movement`
           ),
-          axios.get(
+          api.get(
             `${import.meta.env.VITE_API_URL}/api/dashboard/revenue-trend?view=${revenueView}`
           ),
-          axios.get(
+          api.get(
             `${import.meta.env.VITE_API_URL}/api/dashboard/inventory-value-trend`
           )
         ]);
@@ -235,6 +245,13 @@ export function Dashboard() {
         return {
           ...kpi,
           value: dashboardStats.totalUsers.toString()
+        };
+      }
+
+      if (kpi.title === "Inactive Suppliers") {
+        return {
+          ...kpi,
+          value: dashboardStats.inactiveSuppliers.toString()
         };
       }
 

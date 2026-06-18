@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Save, Trash2, History } from "lucide-react";
-import axios from "axios";
+import api from "../../lib/api";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
@@ -53,6 +53,19 @@ interface StockOutRow {
   quantityToIssue: string;
 }
 
+type StockOutRowErrors = {
+  product?: string;
+  batch?: string;
+  quantityToIssue?: string;
+  transactionSellingPrice?: string;
+};
+
+type StockOutErrors = {
+  referenceNumber?: string;
+  issuedTo?: string;
+  rows: Record<number, StockOutRowErrors>;
+};
+
 type ProductBatchOption = {
   productBatchId: number;
   productId: number;
@@ -63,7 +76,10 @@ type ProductBatchOption = {
   quantityAvailable: number;
   costPrice: number;
   sellingPrice: number;
-  expiryDate: string;
+  expiryDate?: string | null;
+  ExpiryDate?: string | null;
+  expiry?: string | null;
+  Expiry?: string | null;
   supplierId: number;
   supplierName: string;
 };
@@ -84,17 +100,27 @@ const createRow = (id: number): StockOutRow => ({
   quantityToIssue: "",
 });
 
-const getDaysRemaining = (expiryDate: string) => {
+const getSelectedExpiryDate = (row: StockOutRow) => row.expiryDate || "";
+
+const getDaysRemaining = (expiryDate?: string | null) => {
   if (!expiryDate) return null;
 
-  const today = new Date();
-  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const expiry = new Date(`${expiryDate}T00:00:00`);
+  const current = new Date();
+  const today = new Date(current.getFullYear(), current.getMonth(), current.getDate());
+  const parsedExpiry = new Date(expiryDate);
 
-  return Math.floor((expiry.getTime() - current.getTime()) / (1000 * 60 * 60 * 24));
+  if (isNaN(parsedExpiry.getTime())) return null;
+
+  const expiry = new Date(
+    parsedExpiry.getFullYear(),
+    parsedExpiry.getMonth(),
+    parsedExpiry.getDate()
+  );
+
+  return Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-const getExpiryStatus = (expiryDate: string): ExpiryStatus | null => {
+const getExpiryStatus = (expiryDate?: string | null): ExpiryStatus | null => {
   const daysRemaining = getDaysRemaining(expiryDate);
   if (daysRemaining === null) return null;
   if (daysRemaining < 0) return "Expired";
@@ -102,19 +128,45 @@ const getExpiryStatus = (expiryDate: string): ExpiryStatus | null => {
   return "Good";
 };
 
+const formatExpiryLabel = (expiryDate?: string | null) => {
+  if (!expiryDate)
+    return "No Expiry";
+
+  const date = new Date(expiryDate);
+
+  if (isNaN(date.getTime()))
+    return "Invalid Expiry";
+
+  return date.toLocaleDateString("en-GB");
+};
+
+const getExpiryTimestamp = (expiryDate?: string | null) => {
+  if (!expiryDate) return Number.MAX_SAFE_INTEGER;
+
+  const timestamp = new Date(expiryDate).getTime();
+
+  return isNaN(timestamp)
+    ? Number.MAX_SAFE_INTEGER
+    : timestamp;
+};
+
+const getBatchExpiryValue = (batch: ProductBatchOption) =>
+  batch.expiryDate ?? batch.ExpiryDate ?? batch.expiry ?? batch.Expiry ?? null;
+
 export function StockOut() {
   const [rows, setRows] = useState<StockOutRow[]>([createRow(1), createRow(2)]);
   const [batchOptions, setBatchOptions] = useState<ProductBatchOption[]>([]);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [errors, setErrors] = useState<StockOutErrors>({ rows: {} });
   const [activityOpen, setActivityOpen] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activities, setActivities] = useState<StockActivity[]>([]);
 
   const rowsWithExpiryStatus = rows.map((row) => ({
     ...row,
-    daysRemaining: getDaysRemaining(row.expiryDate),
-    expiryStatus: getExpiryStatus(row.expiryDate),
+    daysRemaining: getDaysRemaining(getSelectedExpiryDate(row)),
+    expiryStatus: getExpiryStatus(getSelectedExpiryDate(row)),
   }));
   const hasExpiredSelectedBatch = rowsWithExpiryStatus.some(
     (row) => row.productBatchId > 0 && row.expiryStatus === "Expired"
@@ -126,11 +178,32 @@ export function StockOut() {
   );
 
   const fetchBatchData = async () => {
-    const response = await axios.get<ProductBatchOption[]>(
+    const response = await api.get<ProductBatchOption[]>(
       `${import.meta.env.VITE_API_URL}/api/products/batches`,
     );
 
+    console.log("Batch Data:", response.data);
     setBatchOptions(response.data);
+  };
+
+  const getProductBatches = (productName: string) =>
+    batchOptions
+      .filter((item) => item.productName === productName)
+      .sort(
+        (a, b) =>
+          getExpiryTimestamp(getBatchExpiryValue(a)) -
+          getExpiryTimestamp(getBatchExpiryValue(b))
+      );
+
+  const applyBatchSelection = (rowId: number, batch: ProductBatchOption | undefined) => {
+    updateRow(rowId, "productBatchId", batch?.productBatchId ?? 0);
+    updateRow(rowId, "batch", batch?.batchNumber ?? "");
+    updateRow(rowId, "expiryDate", getBatchExpiryValue(batch ?? ({} as ProductBatchOption)) ?? "");
+    updateRow(rowId, "availableQuantity", batch?.quantityAvailable ?? 0);
+    updateRow(rowId, "batchCostPrice", batch?.costPrice ?? 0);
+    updateRow(rowId, "batchSellingPrice", batch?.sellingPrice ?? 0);
+    updateRow(rowId, "transactionSellingPrice", String(batch?.sellingPrice ?? ""));
+    updateRow(rowId, "productId", batch?.productId ?? 0);
   };
 
   useEffect(() => {
@@ -140,15 +213,8 @@ export function StockOut() {
   const fetchRecentActivity = async () => {
     setActivityLoading(true);
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get<StockActivity[]>(
+      const response = await api.get<StockActivity[]>(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/recent-stock-out`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
       setActivities(response.data);
     } catch (error) {
@@ -163,9 +229,75 @@ export function StockOut() {
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
     );
+    setErrors((current) => ({
+      ...current,
+      rows: {
+        ...current.rows,
+        [id]: {
+          ...current.rows[id],
+          ...(key === "product" ? { product: undefined, batch: undefined } : {}),
+          ...(key === "productBatchId" ? { batch: undefined } : {}),
+          ...(key === "quantityToIssue" ? { quantityToIssue: undefined } : {}),
+          ...(key === "transactionSellingPrice" ? { transactionSellingPrice: undefined } : {}),
+        },
+      },
+    }));
   };
 
   const handleSubmit = async () => {
+    const referenceNumber =
+      (document.getElementById("reference") as HTMLInputElement)?.value?.trim() || "";
+    const issuedTo =
+      (document.getElementById("issuedTo") as HTMLInputElement)?.value?.trim() || "";
+
+    const nextErrors: StockOutErrors = { rows: {} };
+    let hasValidationErrors = false;
+
+    if (!referenceNumber) {
+      nextErrors.referenceNumber = "Invoice Number is required";
+      hasValidationErrors = true;
+    }
+
+    if (!issuedTo) {
+      nextErrors.issuedTo = "Issued To is required";
+      hasValidationErrors = true;
+    }
+
+    for (const row of rows) {
+      const rowErrors: StockOutRowErrors = {};
+
+      if (!row.product) {
+        rowErrors.product = "Product is required";
+        hasValidationErrors = true;
+      }
+
+      if (!row.productBatchId) {
+        rowErrors.batch = "Batch is required";
+        hasValidationErrors = true;
+      }
+
+      if (Number(row.quantityToIssue) <= 0) {
+        rowErrors.quantityToIssue = "Quantity must be greater than 0";
+        hasValidationErrors = true;
+      }
+
+      if (Number(row.transactionSellingPrice) <= 0) {
+        rowErrors.transactionSellingPrice = "Selling Price must be greater than 0";
+        hasValidationErrors = true;
+      }
+
+      if (Object.keys(rowErrors).length > 0) {
+        nextErrors.rows[row.id] = rowErrors;
+      }
+    }
+
+    if (hasValidationErrors) {
+      setIsError(true);
+      setMessage("Please fix the highlighted fields.");
+      setErrors(nextErrors);
+      return;
+    }
+
     const selectedBatches = rows
       .filter((r) => r.productBatchId > 0)
       .map((r) => r.productBatchId);
@@ -185,10 +317,8 @@ export function StockOut() {
     }
 
     const requestData = {
-      ReferenceNumber:
-        (document.getElementById("reference") as HTMLInputElement)?.value || undefined,
-      IssuedTo:
-        (document.getElementById("issuedTo") as HTMLInputElement)?.value || undefined,
+      ReferenceNumber: referenceNumber || undefined,
+      IssuedTo: issuedTo || undefined,
       Items: rows
         .filter((row) => row.productBatchId > 0 && row.quantityToIssue)
         .map((row) => ({
@@ -200,24 +330,17 @@ export function StockOut() {
     };
 
     try {
-      const token = localStorage.getItem("token");
-
       console.log("STOCK OUT REQUEST");
       console.log(JSON.stringify(requestData, null, 2));
-      console.log("TOKEN:", token);
       console.log("REQUEST:", requestData);
-      const response = await axios.post(
+      const response = await api.post(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-out`,
         requestData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
 
       setIsError(false);
       setMessage("Stock Out completed successfully.");
+      setErrors({ rows: {} });
       await fetchBatchData();
       setRows([createRow(1), createRow(2)]);
       console.log(response.data);
@@ -258,15 +381,39 @@ export function StockOut() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="issuedTo">Issued To</Label>
-              <Input id="issuedTo" placeholder="Recipient, shop, or department" className="bg-white" />
+              <Input
+                id="issuedTo"
+                placeholder="Recipient, shop, or department"
+                className="bg-white"
+                onChange={(event) =>
+                  setErrors((current) => ({
+                    ...current,
+                    issuedTo: event.currentTarget.value.trim() ? undefined : current.issuedTo,
+                  }))
+                }
+              />
+              {errors.issuedTo && <p className="text-sm text-red-600">{errors.issuedTo}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="issueDate">Issue Date</Label>
               <Input id="issueDate" type="date" className="bg-white" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reference">Reference Number</Label>
-              <Input id="reference" placeholder="Invoice or transfer reference" className="bg-white" />
+              <Label htmlFor="reference">Invoice Number</Label>
+              <Input
+                id="reference"
+                placeholder="Enter invoice number"
+                className="bg-white"
+                onChange={(event) =>
+                  setErrors((current) => ({
+                    ...current,
+                    referenceNumber: event.currentTarget.value.trim()
+                      ? undefined
+                      : current.referenceNumber,
+                  }))
+                }
+              />
+              {errors.referenceNumber && <p className="text-sm text-red-600">{errors.referenceNumber}</p>}
             </div>
           </div>
 
@@ -289,19 +436,14 @@ export function StockOut() {
                 {rows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
+                      <div className="space-y-2">
                       <Select
                         value={row.product}
                         onValueChange={(value) => {
-                          const selected = batchOptions.find((item) => item.productName === value);
+                          const productBatches = getProductBatches(value);
+                          const selected = productBatches[0];
                           updateRow(row.id, "product", value);
-                          updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
-                          updateRow(row.id, "batch", selected?.batchNumber ?? "");
-                          updateRow(row.id, "expiryDate", selected?.expiryDate ?? "");
-                          updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
-                          updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
-                          updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
-                          updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
-                          updateRow(row.id, "productId", selected?.productId ?? 0);
+                          applyBatchSelection(row.id, selected);
                         }}
                       >
                         <SelectTrigger className="bg-white">
@@ -315,8 +457,13 @@ export function StockOut() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {errors.rows[row.id]?.product && (
+                        <p className="text-sm text-red-600">{errors.rows[row.id]?.product}</p>
+                      )}
+                      </div>
                     </TableCell>
                     <TableCell>
+                      <div className="space-y-2">
                       <Select
                         value={row.productBatchId ? row.productBatchId.toString() : ""}
                         onValueChange={(value) => {
@@ -324,14 +471,7 @@ export function StockOut() {
                             (item) => item.productBatchId === parseInt(value)
                           );
 
-                          updateRow(row.id, "batch", selected?.batchNumber ?? "");
-                          updateRow(row.id, "productBatchId", selected?.productBatchId ?? 0);
-                          updateRow(row.id, "expiryDate", selected?.expiryDate ?? "");
-                          updateRow(row.id, "availableQuantity", selected?.quantityAvailable ?? 0);
-                          updateRow(row.id, "batchCostPrice", selected?.costPrice ?? 0);
-                          updateRow(row.id, "batchSellingPrice", selected?.sellingPrice ?? 0);
-                          updateRow(row.id, "transactionSellingPrice", String(selected?.sellingPrice ?? ""));
-                          updateRow(row.id, "productId", selected?.productId ?? 0);
+                          applyBatchSelection(row.id, selected);
                         }}
                       >
                         <SelectTrigger className="bg-white">
@@ -350,20 +490,28 @@ export function StockOut() {
                               );
                             })
                             .map((item) => (
-                              <SelectItem key={item.productBatchId} value={item.productBatchId.toString()}>
-                                {item.batchNumber}
+                              <SelectItem
+                                key={item.productBatchId}
+                                value={item.productBatchId.toString()}
+                            >
+                                {`${item.batchNumber} | ${formatExpiryLabel(getBatchExpiryValue(item))} | Qty ${item.quantityAvailable}`}
                               </SelectItem>
                             ))}
                         </SelectContent>
                       </Select>
+                      {errors.rows[row.id]?.batch && (
+                        <p className="text-sm text-red-600">{errors.rows[row.id]?.batch}</p>
+                      )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-semibold text-slate-800">
                       {row.availableQuantity.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       {(() => {
-                        const daysRemaining = getDaysRemaining(row.expiryDate);
-                        const status = getExpiryStatus(row.expiryDate);
+                        const selectedExpiryDate = getSelectedExpiryDate(row);
+                        const daysRemaining = getDaysRemaining(selectedExpiryDate);
+                        const status = getExpiryStatus(selectedExpiryDate);
 
                         if (!status || daysRemaining === null) {
                           return <span className="text-sm text-slate-400">-</span>;
@@ -395,6 +543,7 @@ export function StockOut() {
                     <TableCell className="font-semibold text-slate-800">₹{row.batchCostPrice.toFixed(2)}</TableCell>
                     <TableCell className="font-semibold text-slate-800">₹{row.batchSellingPrice.toFixed(2)}</TableCell>
                     <TableCell>
+                      <div className="space-y-2">
                       <Input
                         type="number"
                         step="0.01"
@@ -402,14 +551,25 @@ export function StockOut() {
                         onChange={(event) => updateRow(row.id, "transactionSellingPrice", event.target.value)}
                         className="bg-white"
                       />
+                      {errors.rows[row.id]?.transactionSellingPrice && (
+                        <p className="text-sm text-red-600">
+                          {errors.rows[row.id]?.transactionSellingPrice}
+                        </p>
+                      )}
+                      </div>
                     </TableCell>
                     <TableCell>
+                      <div className="space-y-2">
                       <Input
                         type="number"
                         value={row.quantityToIssue}
                         onChange={(event) => updateRow(row.id, "quantityToIssue", event.target.value)}
                         className="bg-white"
                       />
+                      {errors.rows[row.id]?.quantityToIssue && (
+                        <p className="text-sm text-red-600">{errors.rows[row.id]?.quantityToIssue}</p>
+                      )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Button

@@ -18,7 +18,8 @@ public class ProductRepository : IProductRepository
     public Task<List<ProductDto>> GetProductsAsync()
     {
         return BuildProductQuery()
-            .OrderBy(product => product.Name)
+            .OrderByDescending(product => product.TransactionCount)
+            .ThenBy(product => product.Name)
             .ToListAsync();
     }
 
@@ -98,6 +99,9 @@ public class ProductRepository : IProductRepository
                     : item.Product.Category.CategoryName,
                 Description = item.Product.Description ?? string.Empty,
                 Stock = item.Stock,
+                TransactionCount = _context.StockTransactionItems.AsNoTracking()
+                    .Count(transactionItem =>
+                        transactionItem.ProductId == item.Product.ProductId),
                 Status = item.Stock == 0 && item.HasExpiredBatch
                     ? "Expired"
                     : item.HasExpiringBatch

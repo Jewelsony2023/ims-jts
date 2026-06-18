@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../lib/api";
 import { Plus, Search, Filter, Edit, Trash2, Eye, Upload } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Label } from "../components/ui/label";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
@@ -51,6 +52,7 @@ export function Products() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [selectedProduct, setSelectedProduct] = useState<ProductDetails | null>(null);
 
@@ -88,7 +90,7 @@ export function Products() {
   ).sort();
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${import.meta.env.VITE_API_URL}/api/products`
       );
 
@@ -140,14 +142,14 @@ export function Products() {
 
       if (editingId === null) {
 
-        await axios.post(
+        await api.post(
           `${import.meta.env.VITE_API_URL}/api/products`,
           formData
         );
 
       } else {
 
-        await axios.put(
+        await api.put(
           `${import.meta.env.VITE_API_URL}/api/products/${editingId}`,
           formData
         );
@@ -168,16 +170,10 @@ export function Products() {
       setIsSaving(false);
     }
   };
-  const handleDeleteProduct = async (
-    id: number
-  ) => {
-
-    if (!confirm("Delete product?"))
-      return;
-
+  const handleDeleteProduct = async (id: number) => {
     try {
 
-      await axios.delete(
+      await api.delete(
         `${import.meta.env.VITE_API_URL}/api/products/${id}`
       );
 
@@ -419,6 +415,9 @@ export function Products() {
       <Card className="border-none shadow-md">
         <CardHeader>
           <CardTitle className="text-lg">Products Catalog</CardTitle>
+          <p className="text-sm text-slate-600">
+            Products sorted by transaction activity (Most Trending First)
+          </p>
         </CardHeader>
         <CardContent>
           <Table>
@@ -505,7 +504,7 @@ export function Products() {
                         <Edit className="w-4 h-4 text-slate-600" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() =>
-                        handleDeleteProduct(product.id)
+                        setDeleteTarget(product)
                       }>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
@@ -568,6 +567,20 @@ export function Products() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Product"
+        description="Are you sure you want to delete this product?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await handleDeleteProduct(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

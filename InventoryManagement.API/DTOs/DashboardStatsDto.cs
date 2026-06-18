@@ -8,6 +8,8 @@ public class DashboardStatsDto
 
     public int TotalSuppliers { get; set; }
 
+    public int InactiveSuppliers { get; set; }
+
     public int LowStockItems { get; set; }
 
     public decimal InventoryValue { get; set; }

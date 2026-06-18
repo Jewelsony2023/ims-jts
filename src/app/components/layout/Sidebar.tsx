@@ -5,12 +5,8 @@ import {
   FileText,
   FolderTree,
   Package,
-  PackageCheck,
-  Settings,
-
   TrendingDown,
   TrendingUp,
-  UserCircle,
   UserCog,
   Users,
   X,
@@ -20,20 +16,23 @@ import { Button } from "../ui/button";
 
 export const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Users, label: "Suppliers", path: "/suppliers" },
+  { icon: FolderTree, label: "Categories", path: "/categories" },
+  { icon: Package, label: "Products", path: "/products" },
   {
     icon: Archive,
     label: "Inventory",
     path: "/inventory",
+  },
+  {
+    icon: FileText,
+    label: "Stock Register",
+    path: "/stock-in",
     children: [
-      { icon: PackageCheck, label: "Inventory View", path: "/inventory" },
       { icon: TrendingUp, label: "Stock In", path: "/stock-in" },
       { icon: TrendingDown, label: "Stock Out", path: "/stock-out" },
     ],
   },
-  { icon: Package, label: "Products", path: "/products" },
-
-  { icon: FolderTree, label: "Categories", path: "/categories" },
-  { icon: Users, label: "Suppliers", path: "/suppliers" },
   { icon: UserCog, label: "User Management", path: "/users" },
 ];
 

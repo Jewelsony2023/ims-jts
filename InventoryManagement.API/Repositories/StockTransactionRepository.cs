@@ -23,22 +23,33 @@ public class StockTransactionRepository : IStockTransactionRepository
         return await _context.ProductBatches
             .AsNoTracking()
             .Where(pb => pb.Product != null)
-            .Select(pb => new StockTransactionDto
+            .Select(pb => new
             {
-                ProductBatchId = pb.ProductBatchId,
-                Product = pb.Product!.ProductName,
-                ProductImageUrl = pb.Product.ProductImageUrl ?? string.Empty,
-                SKU = pb.Product.SKU,
-                Batch = pb.BatchNumber,
-                Quantity = pb.QuantityAvailable,
-                CostPrice = pb.CostPrice,
-                Expiry = pb.ExpiryDate.ToString("yyyy-MM-dd"),
-                DaysRemaining = (int)(pb.ExpiryDate.Date - today).TotalDays,
-                Status = pb.QuantityAvailable == 0 || pb.ExpiryDate.Date < today
+                ProductBatch = pb,
+                LatestTransactionDate = _context.StockTransactionItems
+                    .AsNoTracking()
+                    .Where(transactionItem => transactionItem.ProductBatchId == pb.ProductBatchId)
+                    .Select(transactionItem => (DateTime?)transactionItem.StockTransactionHeader!.CreatedAt)
+                    .Max()
+            })
+            .OrderByDescending(item => item.LatestTransactionDate)
+            .ThenBy(item => item.ProductBatch.Product!.ProductName)
+            .Select(item => new StockTransactionDto
+            {
+                ProductBatchId = item.ProductBatch.ProductBatchId,
+                Product = item.ProductBatch.Product!.ProductName,
+                ProductImageUrl = item.ProductBatch.Product.ProductImageUrl ?? string.Empty,
+                SKU = item.ProductBatch.Product.SKU,
+                Batch = item.ProductBatch.BatchNumber,
+                Quantity = item.ProductBatch.QuantityAvailable,
+                CostPrice = item.ProductBatch.CostPrice,
+                Expiry = item.ProductBatch.ExpiryDate.ToString("yyyy-MM-dd"),
+                DaysRemaining = (int)(item.ProductBatch.ExpiryDate.Date - today).TotalDays,
+                Status = item.ProductBatch.QuantityAvailable == 0 || item.ProductBatch.ExpiryDate.Date < today
                     ? "Expired"
-                    : pb.ExpiryDate.Date >= today && pb.ExpiryDate.Date <= expiringSoonDate
+                    : item.ProductBatch.ExpiryDate.Date >= today && item.ProductBatch.ExpiryDate.Date <= expiringSoonDate
                         ? "Expiring Soon"
-                        : pb.QuantityAvailable <= 0
+                        : item.ProductBatch.QuantityAvailable <= 0
                             ? "Expired"
                             : "Good"
             })
@@ -53,22 +64,31 @@ public class StockTransactionRepository : IStockTransactionRepository
         return await _context.ProductBatches
             .AsNoTracking()
             .Where(pb => pb.ProductBatchId == productBatchId && pb.Product != null)
-            .Select(pb => new StockTransactionDto
+            .Select(pb => new
             {
-                ProductBatchId = pb.ProductBatchId,
-                Product = pb.Product!.ProductName,
-                ProductImageUrl = pb.Product.ProductImageUrl ?? string.Empty,
-                SKU = pb.Product.SKU,
-                Batch = pb.BatchNumber,
-                Quantity = pb.QuantityAvailable,
-                CostPrice = pb.CostPrice,
-                Expiry = pb.ExpiryDate.ToString("yyyy-MM-dd"),
-                DaysRemaining = (int)(pb.ExpiryDate.Date - today).TotalDays,
-                Status = pb.QuantityAvailable == 0 || pb.ExpiryDate.Date < today
+                ProductBatch = pb,
+                LatestTransactionDate = _context.StockTransactionItems
+                    .AsNoTracking()
+                    .Where(transactionItem => transactionItem.ProductBatchId == pb.ProductBatchId)
+                    .Select(transactionItem => (DateTime?)transactionItem.StockTransactionHeader!.CreatedAt)
+                    .Max()
+            })
+            .Select(item => new StockTransactionDto
+            {
+                ProductBatchId = item.ProductBatch.ProductBatchId,
+                Product = item.ProductBatch.Product!.ProductName,
+                ProductImageUrl = item.ProductBatch.Product.ProductImageUrl ?? string.Empty,
+                SKU = item.ProductBatch.Product.SKU,
+                Batch = item.ProductBatch.BatchNumber,
+                Quantity = item.ProductBatch.QuantityAvailable,
+                CostPrice = item.ProductBatch.CostPrice,
+                Expiry = item.ProductBatch.ExpiryDate.ToString("yyyy-MM-dd"),
+                DaysRemaining = (int)(item.ProductBatch.ExpiryDate.Date - today).TotalDays,
+                Status = item.ProductBatch.QuantityAvailable == 0 || item.ProductBatch.ExpiryDate.Date < today
                     ? "Expired"
-                    : pb.ExpiryDate.Date >= today && pb.ExpiryDate.Date <= expiringSoonDate
+                    : item.ProductBatch.ExpiryDate.Date >= today && item.ProductBatch.ExpiryDate.Date <= expiringSoonDate
                         ? "Expiring Soon"
-                        : pb.QuantityAvailable <= 0
+                        : item.ProductBatch.QuantityAvailable <= 0
                             ? "Expired"
                             : "Good"
             })

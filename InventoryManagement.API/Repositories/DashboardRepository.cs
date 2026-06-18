@@ -28,6 +28,11 @@ public class DashboardRepository : IDashboardRepository
         return CountOrZeroAsync(() => _context.Suppliers.CountAsync());
     }
 
+    public Task<int> GetInactiveSuppliersAsync()
+    {
+        return CountOrZeroAsync(() => _context.Suppliers.CountAsync(supplier => !supplier.IsActive));
+    }
+
     public Task<int> GetLowStockItemsAsync()
     {
         return CountOrZeroAsync(() =>

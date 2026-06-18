@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../lib/api";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 type Category = {
   id: number;
@@ -27,6 +28,7 @@ export function Categories() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     name: "",
@@ -46,7 +48,7 @@ export function Categories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get<Category[]>(
+      const response = await api.get<Category[]>(
         `${import.meta.env.VITE_API_URL}/api/categories`,
       );
 
@@ -113,12 +115,12 @@ export function Categories() {
       };
 
       if (editingId === null) {
-        await axios.post(
+        await api.post(
           `${import.meta.env.VITE_API_URL}/api/categories`,
           payload,
         );
       } else {
-        await axios.put(
+        await api.put(
           `${import.meta.env.VITE_API_URL}/api/categories/${editingId}`,
           payload,
         );
@@ -135,10 +137,8 @@ export function Categories() {
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm("Delete category?")) return;
-
     try {
-      await axios.delete(
+      await api.delete(
         `${import.meta.env.VITE_API_URL}/api/categories/${id}`,
       );
 
@@ -253,7 +253,7 @@ export function Categories() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => handleDeleteCategory(category.id)}
+                    onClick={() => setDeleteTarget(category)}
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
@@ -353,6 +353,20 @@ export function Categories() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Category"
+        description="Are you sure you want to delete this category?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await handleDeleteCategory(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

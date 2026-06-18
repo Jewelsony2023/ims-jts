@@ -9,6 +9,8 @@ public interface IDashboardRepository
 
     Task<int> GetTotalSuppliersAsync();
 
+    Task<int> GetInactiveSuppliersAsync();
+
     Task<int> GetLowStockItemsAsync();
     Task<decimal> GetInventoryValueAsync();
 

@@ -7,7 +7,7 @@ public class StockInRequestDto
     /// <summary>
     /// validation
     /// </summary>
-    [Required(ErrorMessage = "InvoiceNumber is required.")]
+    [Required(ErrorMessage = "Purchase Order Number is required.")]
     public string InvoiceNumber { get; set; } = string.Empty;
 
     public string? Notes { get; set; }

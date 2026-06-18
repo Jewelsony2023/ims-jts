@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Filter, Download } from "lucide-react";
-import axios from "axios";
+import api from "../../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -37,18 +37,13 @@ type InventoryItem = {
 
 export function Inventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const fetchInventory = async () => {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get<InventoryItem[]>(
+      const response = await api.get<InventoryItem[]>(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/inventory`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
       setInventory(response.data);
     };
@@ -62,6 +57,23 @@ export function Inventory() {
     (total, item) => total + item.quantity * item.costPrice,
     0,
   );
+
+  const filteredInventory = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return inventory.filter((item) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        item.product.toLowerCase().includes(normalizedSearch) ||
+        item.sku.toLowerCase().includes(normalizedSearch) ||
+        item.batch.toLowerCase().includes(normalizedSearch);
+
+      const matchesStatus =
+        statusFilter === "all" || item.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [inventory, searchTerm, statusFilter]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -149,19 +161,21 @@ export function Inventory() {
             type="text"
             placeholder="Search by product name, SKU, or batch..."
             className="pl-10 bg-white"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
           />
         </div>
-        <Select defaultValue="all">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[200px] bg-white">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="good">Good</SelectItem>
-            <SelectItem value="low">Low Stock</SelectItem>
-            <SelectItem value="expiring">Expiring Soon</SelectItem>
-            <SelectItem value="expired">Expired</SelectItem>
+            <SelectItem value="Good">Good</SelectItem>
+            <SelectItem value="Low Stock">Low Stock</SelectItem>
+            <SelectItem value="Expiring Soon">Expiring Soon</SelectItem>
+            <SelectItem value="Expired">Expired</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -174,7 +188,7 @@ export function Inventory() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
+            <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">SKU</TableHead>
                 <TableHead className="hidden md:table-cell">Batch Number</TableHead>
@@ -186,8 +200,8 @@ export function Inventory() {
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {inventory.map((item) => (
+          <TableBody>
+              {filteredInventory.map((item) => (
                 <TableRow key={item.productBatchId}>
                   <TableCell>
                     <div className="flex items-center gap-3">

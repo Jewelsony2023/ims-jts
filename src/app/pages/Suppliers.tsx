@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Plus, Mail, Phone, MapPin, Package, Edit, Trash2, Star, Clock, CheckCircle2, Search } from "lucide-react";
-import axios from "axios";
+import { Plus, Mail, Phone, MapPin, Package, Edit, Trash2, Search } from "lucide-react";
+import api from "../../lib/api";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -24,12 +25,7 @@ type Supplier = {
   phone: string;
   address: string;
   productsSupplied: number;
-  leadTime: number;
   status: string;
-  linkedProducts?: string;
-  onTimeRate?: string;
-  defectRate?: string;
-  rating?: number;
 };
 
 
@@ -39,6 +35,7 @@ export function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [editingId, setEditingId] =
@@ -51,15 +48,14 @@ export function Suppliers() {
       email: "",
       phone: "",
       address: "",
-      leadTime: 0,
-      isActive: true,
+      status: "Active",
     });
   const [isSaving, setIsSaving] =
     useState(false);
 
   const fetchSuppliers = async () => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${import.meta.env.VITE_API_URL}/api/suppliers`
       );
 
@@ -82,8 +78,7 @@ export function Suppliers() {
       email: "",
       phone: "",
       address: "",
-      leadTime: 0,
-      isActive: true,
+      status: "Active",
     });
   };
 
@@ -101,10 +96,6 @@ export function Suppliers() {
     }
     if (!formData.phone.trim()) nextErrors.phone = "Phone is required";
     if (!formData.address.trim()) nextErrors.address = "Address is required";
-    if (formData.leadTime <= 0) {
-      nextErrors.leadTime = "Lead time must be greater than 0";
-    }
-
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -115,17 +106,21 @@ export function Suppliers() {
     setIsSaving(true);
     setErrors({});
 
-    
     try {
+      const payload = {
+        ...formData,
+        isActive: formData.status === "Active",
+      };
+
       if (editingId === null) {
-        await axios.post(
+        await api.post(
           `${import.meta.env.VITE_API_URL}/api/suppliers`,
-          formData
+          payload
         );
       } else {
-        await axios.put(
+        await api.put(
           `${import.meta.env.VITE_API_URL}/api/suppliers/${editingId}`,
-          formData
+          payload
         );
       }
 
@@ -142,14 +137,9 @@ export function Suppliers() {
       setIsSaving(false);
     }
   };
-  const handleDeleteSupplier = async (
-    id: number
-  ) => {
-    if (!confirm("Delete supplier?"))
-      return;
-
+  const handleDeleteSupplier = async (id: number) => {
     try {
-      await axios.delete(
+      await api.delete(
         `${import.meta.env.VITE_API_URL}/api/suppliers/${id}`
       );
 
@@ -197,8 +187,7 @@ export function Suppliers() {
               email: "",
               phone: "",
               address: "",
-              leadTime: 0,
-              isActive: true,
+              status: "Active",
             });
 
             setOpen(true);
@@ -322,13 +311,7 @@ export function Suppliers() {
                             email: supplier.email,
                             phone: supplier.phone,
                             address: supplier.address,
-                            leadTime:
-                              Number(
-                                String(supplier.leadTime)
-                                  .replace(" days", "")
-                              ) || 0,
-                            isActive:
-                              supplier.status === "Active",
+                            status: supplier.status ?? "Active",
                           });
 
                           setOpen(true);
@@ -339,11 +322,7 @@ export function Suppliers() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() =>
-                          handleDeleteSupplier(
-                            supplier.id
-                          )
-                        }
+                        onClick={() => setDeleteTarget(supplier)}
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
@@ -380,35 +359,6 @@ export function Suppliers() {
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-center">
-                      <div>
-                        <p className="text-xs text-slate-500">OTIF</p>
-                        <p className="font-semibold text-emerald-700">{supplier.onTimeRate}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Lead</p>
-                        <p className="font-semibold text-slate-800">{supplier.leadTime}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Defects</p>
-                        <p className="font-semibold text-amber-700">{supplier.defectRate}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Linked Products</p>
-                      <p className="text-sm text-slate-700">{supplier.linkedProducts}</p>
-                    </div>
-                    <div className="pt-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Rating</span>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                          <span className="font-semibold text-slate-800">
-                            {supplier.rating}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -439,9 +389,6 @@ export function Suppliers() {
                         Products
                       </th>
                       <th className="text-left py-3 px-4 font-semibold text-slate-700">
-                        Performance
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-slate-700">
                         Status
                       </th>
                       <th className="text-right py-3 px-4 font-semibold text-slate-700">
@@ -458,18 +405,6 @@ export function Suppliers() {
                         <td className="py-4 px-4 text-sm text-slate-600">{supplier.phone}</td>
                         <td className="py-4 px-4 font-semibold text-emerald-600">
                           {supplier.productsSupplied}
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex flex-col gap-1 text-sm">
-                            <span className="flex items-center gap-1 text-emerald-700">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              {supplier.onTimeRate} on time
-                            </span>
-                            <span className="flex items-center gap-1 text-slate-600">
-                              <Clock className="h-3.5 w-3.5" />
-                              {supplier.leadTime} lead time
-                            </span>
-                          </div>
                         </td>
                         <td className="py-4 px-4">
                           <Badge
@@ -497,13 +432,7 @@ export function Suppliers() {
                                   email: supplier.email,
                                   phone: supplier.phone,
                                   address: supplier.address,
-                                  leadTime:
-                                    Number(
-                                      String(supplier.leadTime)
-                                        .replace(" days", "")
-                                    ) || 0,
-                                  isActive:
-                                    supplier.status === "Active",
+                                  status: supplier.status ?? "Active",
                                 });
 
                                 setOpen(true);
@@ -511,15 +440,11 @@ export function Suppliers() {
                             >
                               <Edit className="w-4 h-4 text-slate-600" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                handleDeleteSupplier(
-                                  supplier.id
-                                )
-                              }
-                            >
+                      <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteTarget(supplier)}
+                          >
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </Button>
                           </div>
@@ -661,27 +586,20 @@ export function Suppliers() {
             </div>
 
             <div>
-              <Label>Lead Time</Label>
-              <Input
-                type="number"
-                value={formData.leadTime}
+              <Label>Status</Label>
+              <select
+                value={formData.status}
                 onChange={(e) => {
                   setFormData({
                     ...formData,
-                    leadTime: Number(
-                      e.target.value
-                    ),
+                    status: e.target.value,
                   });
-                  setErrors((prev) => ({
-                    ...prev,
-                    leadTime: "",
-                  }));
                 }}
-                className={errors.leadTime ? "border-red-500" : ""}
-              />
-              {errors.leadTime && (
-                <p className="text-sm text-red-500">{errors.leadTime}</p>
-              )}
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
             </div>
 
           </div>
@@ -710,6 +628,20 @@ export function Suppliers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Supplier"
+        description="Are you sure you want to delete this supplier?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          await handleDeleteSupplier(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
 
     </div>
   );

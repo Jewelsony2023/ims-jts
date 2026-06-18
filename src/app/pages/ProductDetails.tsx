@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import axios from "axios";
+import api from "../../lib/api";
 import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -77,13 +77,13 @@ export function ProductDetails() {
       setIsNotFound(false);
 
       try {
-        const response = await axios.get<Product>(
+        const response = await api.get<Product>(
           `${import.meta.env.VITE_API_URL}/api/products/${id}`,
         );
 
         setProduct(response.data);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
+        if ((error as any)?.response?.status === 404) {
           setIsNotFound(true);
           setProduct(null);
         } else {

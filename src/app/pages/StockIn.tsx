@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Save, Trash2, History } from "lucide-react";
-import axios from "axios";
+import api from "../../lib/api";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
@@ -45,6 +45,7 @@ interface StockInRow {
   productId: number;
   productBatchId: number | null;
   productName: string;
+  batchSelection: string;
   batchNumber: string;
   manufactureDate: string;
   expiryDate: string;
@@ -67,11 +68,27 @@ type SupplierOption = {
   name: string;
 };
 
+type ProductBatchOption = {
+  productBatchId: number;
+  productId: number;
+  productName: string;
+  productImageUrl: string;
+  sku: string;
+  batchNumber: string;
+  quantityAvailable: number;
+  costPrice: number;
+  sellingPrice: number;
+  expiryDate: string;
+  supplierId: number;
+  supplierName: string;
+};
+
 const createRow = (id: number): StockInRow => ({
   id,
   productId: 0,
   productBatchId: null,
   productName: "",
+  batchSelection: "",
   batchNumber: "",
   manufactureDate: "",
   expiryDate: "",
@@ -89,6 +106,7 @@ export function StockIn() {
   const [rows, setRows] = useState<StockInRow[]>([createRow(1), createRow(2)]);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
+  const [batchOptions, setBatchOptions] = useState<ProductBatchOption[]>([]);
   const [activityOpen, setActivityOpen] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activities, setActivities] = useState<StockActivity[]>([]);
@@ -96,11 +114,15 @@ export function StockIn() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       const [productsRes, suppliersRes] = await Promise.all([
-        axios.get<ProductOption[]>(`${import.meta.env.VITE_API_URL}/api/products/options`),
-        axios.get<SupplierOption[]>(`${import.meta.env.VITE_API_URL}/api/suppliers`)
+        api.get<ProductOption[]>(`${import.meta.env.VITE_API_URL}/api/products/options`),
+        api.get<SupplierOption[]>(`${import.meta.env.VITE_API_URL}/api/suppliers`)
       ]);
       setProducts(productsRes.data);
       setSuppliers(suppliersRes.data);
+      const batchesRes = await api.get<ProductBatchOption[]>(
+        `${import.meta.env.VITE_API_URL}/api/products/batches`
+      );
+      setBatchOptions(batchesRes.data);
     };
     fetchDropdownData().catch(console.error);
   }, []);
@@ -108,15 +130,8 @@ export function StockIn() {
   const fetchRecentActivity = async () => {
     setActivityLoading(true);
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get<StockActivity[]>(
+      const response = await api.get<StockActivity[]>(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/recent-stock-in`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
       setActivities(response.data);
     } catch (error) {
@@ -132,6 +147,116 @@ export function StockIn() {
       current.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
     );
   };
+  const getBatchesForProduct = (productId: number) =>
+    batchOptions.filter((batch) => batch.productId === productId);
+
+  const handleProductChange = (rowId: number, value: string) => {
+    const productId = parseInt(value);
+    const selectedProduct = products.find((product) => product.id === productId);
+
+    setRows((current) =>
+      current.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              productId,
+              productName: selectedProduct?.name ?? "",
+              productBatchId: null,
+              batchSelection: "",
+              batchNumber: "",
+              manufactureDate: "",
+              expiryDate: "",
+              quantity: "",
+              costPrice: "",
+              sellingPrice: "",
+              supplierId: 0,
+              supplierName: "",
+              isExistingBatch: false,
+            }
+          : row
+      )
+    );
+  };
+
+  const handleBatchSelectionChange = (rowId: number, value: string) => {
+    const row = rows.find((item) => item.id === rowId);
+    if (!row) return;
+
+    if (value === "__new__") {
+      setRows((current) =>
+        current.map((item) =>
+          item.id === rowId
+            ? {
+                ...item,
+                batchSelection: value,
+                productBatchId: null,
+                batchNumber: "",
+                manufactureDate: "",
+                expiryDate: "",
+                costPrice: "",
+                sellingPrice: "",
+                supplierId: 0,
+                supplierName: "",
+                isExistingBatch: false,
+              }
+            : item
+        )
+      );
+      return;
+    }
+
+    const selectedBatch = batchOptions.find(
+      (batch) => batch.productBatchId.toString() === value
+    );
+
+    if (!selectedBatch) {
+      setRows((current) =>
+        current.map((item) =>
+          item.id === rowId
+            ? {
+                ...item,
+                batchSelection: value,
+                productBatchId: null,
+                batchNumber: "",
+                manufactureDate: "",
+                expiryDate: "",
+                costPrice: "",
+                sellingPrice: "",
+                supplierId: 0,
+                supplierName: "",
+                isExistingBatch: false,
+              }
+            : item
+        )
+      );
+      return;
+    }
+
+    setRows((current) =>
+      current.map((item) =>
+        item.id === rowId
+          ? {
+              ...item,
+              batchSelection: value,
+              productBatchId: selectedBatch.productBatchId,
+              batchNumber: selectedBatch.batchNumber,
+              manufactureDate: "",
+              expiryDate: "",
+              costPrice: "",
+              sellingPrice: "",
+              supplierId: selectedBatch.supplierId,
+              supplierName: selectedBatch.supplierName,
+              isExistingBatch: true,
+            }
+          : item
+      )
+    );
+
+    fetchBatchDetails(rowId, selectedBatch.productId, selectedBatch.batchNumber).catch(
+      console.error
+    );
+  };
+
   const fetchBatchDetails = async (
     rowId: number,
     productId: number,
@@ -140,17 +265,12 @@ export function StockIn() {
     if (!productId || !batchNumber.trim()) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get(
+      const response = await api.get(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/batch-details`,
         {
           params: {
             productId,
             batchNumber,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -163,6 +283,7 @@ export function StockIn() {
             ? {
                 ...row,
                 productBatchId: batch.productBatchId,
+                batchSelection: batch.productBatchId.toString(),
                 supplierId: batch.supplierId,
                 manufactureDate:
                   batch.manufactureDate.split("T")[0],
@@ -182,6 +303,7 @@ export function StockIn() {
             ? {
                 ...row,
                 productBatchId: null,
+                batchSelection: "__new__",
                 isExistingBatch: false,
               }
             : row
@@ -196,7 +318,7 @@ export function StockIn() {
 
     const requestData = {
       InvoiceNumber:
-        (document.getElementById("invoice") as HTMLInputElement)?.value || "",
+        (document.getElementById("purchaseOrder") as HTMLInputElement)?.value || "",
 
       Notes: undefined,
 
@@ -220,16 +342,9 @@ export function StockIn() {
     };
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.post(
+      const response = await api.post(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/stock-in`,
         requestData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
 
       console.log("SUCCESS RESPONSE:", response.data);
@@ -292,10 +407,6 @@ export function StockIn() {
         )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="invoice">Invoice Number</Label>
-              <Input id="invoice" defaultValue="INV001" className="bg-white" />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="receivedDate">Received Date</Label>
               <Input id="receivedDate" type="date" className="bg-white" />
             </div>
@@ -324,7 +435,10 @@ export function StockIn() {
                 {rows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
-                      <Select value={row.productId.toString()} onValueChange={(value) => updateRow(row.id, "productId", parseInt(value))}>
+                      <Select
+                        value={row.productId.toString()}
+                        onValueChange={(value) => handleProductChange(row.id, value)}
+                      >
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
@@ -336,24 +450,59 @@ export function StockIn() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        value={row.batchNumber}
-                        onChange={(event) =>
-                          updateRow(
-                            row.id,
-                            "batchNumber",
-                            event.target.value.toUpperCase()
-                          )
-                        }
-                        onBlur={() =>
-                          fetchBatchDetails(
-                            row.id,
-                            row.productId,
-                            row.batchNumber
-                          )
-                        }
-                        className="bg-white"
-                      />
+                      <div className="space-y-2">
+                        <Select
+                          value={row.batchSelection}
+                          onValueChange={(value) => handleBatchSelectionChange(row.id, value)}
+                          disabled={!row.productId}
+                        >
+                          <SelectTrigger className="bg-white">
+                            <SelectValue placeholder="Select batch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__new__">Create New Batch</SelectItem>
+                            {getBatchesForProduct(row.productId)
+                              .filter((batch) => {
+                                const alreadySelected = rows.some(
+                                  (item) =>
+                                    item.id !== row.id &&
+                                    item.productBatchId === batch.productBatchId
+                                );
+
+                                return !alreadySelected;
+                              })
+                              .map((batch) => (
+                                <SelectItem
+                                  key={batch.productBatchId}
+                                  value={batch.productBatchId.toString()}
+                                >
+                                  {batch.batchNumber}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        {row.batchSelection === "__new__" && (
+                          <Input
+                            value={row.batchNumber}
+                            onChange={(event) =>
+                              updateRow(
+                                row.id,
+                                "batchNumber",
+                                event.target.value.toUpperCase()
+                              )
+                            }
+                            onBlur={() =>
+                              fetchBatchDetails(
+                                row.id,
+                                row.productId,
+                                row.batchNumber
+                              )
+                            }
+                            placeholder="Enter new batch number"
+                            className="bg-white"
+                          />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Input

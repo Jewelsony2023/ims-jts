@@ -637,7 +637,7 @@ export function StockOut() {
               disabled={hasExpiredSelectedBatch}
             >
               <Save className="h-4 w-4" />
-              Submit Transaction
+              Save
             </Button>
           </div>
         </CardContent>

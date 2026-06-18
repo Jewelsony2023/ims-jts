@@ -622,7 +622,7 @@ export function StockIn() {
             </div>
             <Button className="bg-emerald-500 hover:bg-emerald-600" onClick={handleSubmit}>
               <Save className="h-4 w-4" />
-              Submit Transaction
+              Save
             </Button>
           </div>
         </CardContent>

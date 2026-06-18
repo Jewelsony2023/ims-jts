@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Truck,
   Users,
-  XCircle,
 } from "lucide-react";
 import api from "../../lib/api";
 import {
@@ -75,14 +74,6 @@ const kpiData = [
     color: "bg-purple-500",
   },
   {
-    title: "Inactive Suppliers",
-    value: "0",
-    trend: "+0",
-    positive: false,
-    icon: XCircle,
-    color: "bg-slate-500",
-  },
-  {
     title: "Total Users",
     value: "0",
     trend: "+0",
@@ -99,7 +90,6 @@ type DashboardStats = {
   totalUsers: number;
   totalProducts: number;
   totalSuppliers: number;
-  inactiveSuppliers: number;
   lowStockItems: number;
   inventoryValue: number;
   revenue: number;
@@ -127,7 +117,6 @@ export function Dashboard() {
       totalUsers: 0,
       totalProducts: 0,
       totalSuppliers: 0,
-      inactiveSuppliers: 0,
       lowStockItems: 0,
       inventoryValue: 0,
       revenue: 0,
@@ -244,14 +233,7 @@ export function Dashboard() {
       if (kpi.title === "Total Users") {
         return {
           ...kpi,
-          value: dashboardStats.totalUsers.toString()
-        };
-      }
-
-      if (kpi.title === "Inactive Suppliers") {
-        return {
-          ...kpi,
-          value: dashboardStats.inactiveSuppliers.toString()
+          value: (dashboardStats.totalUsers ?? 0).toString()
         };
       }
 
@@ -268,38 +250,27 @@ export function Dashboard() {
           return (
             <Card key={kpi.title} className="border-none shadow-md">
               <CardContent className="p-5">
-                <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="mb-4 flex items-center justify-center">
                   <div className={`${kpi.color} rounded-lg p-3`}>
                     <Icon className="h-5 w-5 text-white" />
                   </div>
+                </div>
+                <div className="text-center">
                   {isLoading ? (
-                    <Skeleton className="h-6 w-14" />
+                    <Skeleton className="mx-auto h-8 w-24" />
                   ) : (
-                    <Badge
-                      className={
-                        kpi.positive
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      }
-                    >
-                      {kpi.trend}
-                    </Badge>
+                    <h3 className="text-2xl font-bold text-slate-800">
+                      {kpi.value}
+                    </h3>
+                  )}
+                  {isLoading ? (
+                    <Skeleton className="mx-auto mt-2 h-4 w-20" />
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {kpi.title}
+                    </p>
                   )}
                 </div>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-24" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-slate-800">
-                    {kpi.value}
-                  </h3>
-                )}
-                {isLoading ? (
-                  <Skeleton className="mt-2 h-4 w-20" />
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    {kpi.title}
-                  </p>
-                )}
               </CardContent>
             </Card>
           );
@@ -315,6 +286,7 @@ export function Dashboard() {
           </CardHeader>
 
           <CardContent>
+            <div className="max-h-[12.5rem] overflow-y-auto space-y-3 pr-1">
             {dashboardAlerts.lowStockProducts.map(product => (
               <div
                 key={product}
@@ -323,6 +295,7 @@ export function Dashboard() {
                 {product}
               </div>
             ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -334,6 +307,7 @@ export function Dashboard() {
           </CardHeader>
 
           <CardContent>
+            <div className="max-h-[12.5rem] overflow-y-auto space-y-3 pr-1">
             {dashboardAlerts.expiringProducts.map(product => (
               <div
                 key={product}
@@ -342,6 +316,7 @@ export function Dashboard() {
                 {product}
               </div>
             ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -353,6 +328,7 @@ export function Dashboard() {
           </CardHeader>
 
           <CardContent>
+            <div className="max-h-[12.5rem] overflow-y-auto space-y-3 pr-1">
             {dashboardAlerts.expiredProducts.map(product => (
               <div
                 key={product}
@@ -361,6 +337,7 @@ export function Dashboard() {
                 {product}
               </div>
             ))}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -25,7 +25,7 @@ public class DashboardRepository : IDashboardRepository
 
     public Task<int> GetTotalSuppliersAsync()
     {
-        return CountOrZeroAsync(() => _context.Suppliers.CountAsync());
+        return CountOrZeroAsync(() => _context.Suppliers.CountAsync(supplier => supplier.DeletedAt == null));
     }
 
     public Task<int> GetInactiveSuppliersAsync()

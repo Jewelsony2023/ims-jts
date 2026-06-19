@@ -44,10 +44,19 @@ type Product = {
   status: string;
 };
 
+type Category = {
+  id: number;
+  name: string;
+  description: string;
+  productCount: number;
+  color: string;
+};
+
 type ProductDetails = Product;
 
 export function Products() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [open, setOpen] = useState(false);
@@ -85,9 +94,23 @@ export function Products() {
 
     return matchesSearch && matchesCategory;
   });
-  const categoryOptions = Array.from(
-    new Set(products.map((product) => product.category).filter(Boolean)),
-  ).sort();
+  const sortedCategories = [...categories].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get<Category[]>(
+        `${import.meta.env.VITE_API_URL}/api/categories`,
+      );
+
+      setCategories(response.data);
+    } catch (error) {
+      console.error(error);
+      setCategories([]);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       const response = await api.get(
@@ -101,6 +124,7 @@ export function Products() {
     }
   };
   useEffect(() => {
+    fetchCategories();
     fetchProducts();
   }, []);
   const resetForm = () => {
@@ -221,9 +245,9 @@ export function Products() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categoryOptions.map((category) => (
-                <SelectItem key={category} value={category.toLowerCase()}>
-                  {category}
+              {sortedCategories.map((category) => (
+                <SelectItem key={category.id} value={category.name.toLowerCase()}>
+                  {category.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -354,14 +378,11 @@ export function Products() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Antibiotics</SelectItem>
-                    <SelectItem value="2">Pain Relief</SelectItem>
-                    <SelectItem value="3">Diabetes</SelectItem>
-                    <SelectItem value="4">PPE</SelectItem>
-                    <SelectItem value="5">Hygiene</SelectItem>
-                    <SelectItem value="6">Vitamins</SelectItem>
-                    <SelectItem value="7">Beverages</SelectItem>
-                    <SelectItem value="8">Dairy</SelectItem>
+                    {sortedCategories.map((category) => (
+                      <SelectItem key={category.id} value={String(category.id)}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.categoryId && (
@@ -494,7 +515,12 @@ export function Products() {
                           sku: product.sku,
                           barcode: product.barcode,
                           description: product.description,
-                          categoryId: 1,
+                          categoryId:
+                            categories.find(
+                              (category) =>
+                                category.name.toLowerCase() ===
+                                product.category.toLowerCase(),
+                            )?.id ?? 1,
                           image: product.image,
                           minimumStockLevel: 0,
                         });

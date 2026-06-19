@@ -40,4 +40,48 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.CountAsync();
     }
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .Where(u => u.DeletedAt == null)
+            .OrderBy(u => u.FullName)
+            .ToListAsync();
+    }
+
+    public async Task<User?> GetByIdAsync(int id)
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u =>
+                u.UserId == id &&
+                u.DeletedAt == null);
+    }
+
+    public async Task<bool> UpdateAsync(User user)
+    {
+        _context.Users.Update(user);
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> ToggleStatusAsync(int id)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u =>
+                u.UserId == id &&
+                u.DeletedAt == null);
+
+        if (user == null)
+            return false;
+
+        user.IsActive = !user.IsActive;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }

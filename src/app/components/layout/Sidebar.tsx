@@ -55,6 +55,11 @@ type SidebarProps = {
 
 export function Sidebar({ isMenuOpen, onCloseMenu }: SidebarProps) {
   const location = useLocation();
+  const role = localStorage.getItem("role");
+  const visibleNavItems =
+    role === "Administrator"
+      ? navItems
+      : navItems.filter((item) => item.path !== "/users");
 
   return (
     <>
@@ -88,7 +93,7 @@ export function Sidebar({ isMenuOpen, onCloseMenu }: SidebarProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const active = isItemActive(location.pathname, item);
 

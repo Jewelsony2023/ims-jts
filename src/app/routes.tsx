@@ -31,7 +31,11 @@ export const router = createBrowserRouter([
           { path: "stock-in", Component: StockIn },
           { path: "stock-out", Component: StockOut },
           { path: "inventory", Component: Inventory },
-          { path: "users", Component: UserManagement },
+          {
+            path: "users",
+            Component: () => <ProtectedRoute allowedRoles={["Administrator"]} />,
+            children: [{ index: true, Component: UserManagement }],
+          },
         ],
       },
     ],

@@ -3,6 +3,7 @@ import { RouterProvider } from "react-router";
 import { router } from "./routes";
 import { AlertDialog } from "@/components/common/AlertDialog";
 import { subscribeToSessionExpired } from "@/lib/sessionDialog";
+import { Toaster } from "@/app/components/ui/sonner";
 
 export default function App() {
   const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <>
       <RouterProvider router={router} />
+      <Toaster richColors position="top-right" />
       <AlertDialog
         open={sessionAlertOpen}
         title="Session Expired"

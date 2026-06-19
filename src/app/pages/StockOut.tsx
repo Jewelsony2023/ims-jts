@@ -153,6 +153,12 @@ const getExpiryTimestamp = (expiryDate?: string | null) => {
 const getBatchExpiryValue = (batch: ProductBatchOption) =>
   batch.expiryDate ?? batch.ExpiryDate ?? batch.expiry ?? batch.Expiry ?? null;
 
+const isBlankStockOutRow = (row: StockOutRow) =>
+  row.productId === 0 &&
+  row.productBatchId === 0 &&
+  row.quantityToIssue.trim() === "" &&
+  row.transactionSellingPrice.trim() === "";
+
 export function StockOut() {
   const [rows, setRows] = useState<StockOutRow[]>([createRow(1), createRow(2)]);
   const [batchOptions, setBatchOptions] = useState<ProductBatchOption[]>([]);
@@ -249,6 +255,7 @@ export function StockOut() {
       (document.getElementById("reference") as HTMLInputElement)?.value?.trim() || "";
     const issuedTo =
       (document.getElementById("issuedTo") as HTMLInputElement)?.value?.trim() || "";
+    const activeRows = rows.filter((row) => !isBlankStockOutRow(row));
 
     const nextErrors: StockOutErrors = { rows: {} };
     let hasValidationErrors = false;
@@ -263,7 +270,14 @@ export function StockOut() {
       hasValidationErrors = true;
     }
 
-    for (const row of rows) {
+    if (activeRows.length === 0) {
+      setIsError(true);
+      setMessage("Please add at least one stock out row.");
+      setErrors(nextErrors);
+      return;
+    }
+
+    for (const row of activeRows) {
       const rowErrors: StockOutRowErrors = {};
 
       if (!row.product) {
@@ -298,7 +312,7 @@ export function StockOut() {
       return;
     }
 
-    const selectedBatches = rows
+    const selectedBatches = activeRows
       .filter((r) => r.productBatchId > 0)
       .map((r) => r.productBatchId);
 
@@ -308,7 +322,7 @@ export function StockOut() {
       return;
     }
 
-    for (const row of rows) {
+    for (const row of activeRows) {
       if (Number(row.quantityToIssue) > row.availableQuantity) {
         setIsError(true);
         setMessage(`Cannot issue more than available stock for ${row.product}`);
@@ -319,7 +333,7 @@ export function StockOut() {
     const requestData = {
       ReferenceNumber: referenceNumber || undefined,
       IssuedTo: issuedTo || undefined,
-      Items: rows
+      Items: activeRows
         .filter((row) => row.productBatchId > 0 && row.quantityToIssue)
         .map((row) => ({
           ProductId: row.productId,

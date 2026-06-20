@@ -5,6 +5,7 @@ import {
   FileText,
   FolderTree,
   Package,
+  BarChart3,
   TrendingDown,
   TrendingUp,
   UserCog,
@@ -19,6 +20,7 @@ export const navItems = [
   { icon: Users, label: "Suppliers", path: "/suppliers" },
   { icon: FolderTree, label: "Categories", path: "/categories" },
   { icon: Package, label: "Products", path: "/products" },
+  { icon: BarChart3, label: "ML Analytics", path: "/ml-analytics" },
   {
     icon: Archive,
     label: "Inventory",

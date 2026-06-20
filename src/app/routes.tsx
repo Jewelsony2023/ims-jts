@@ -5,6 +5,7 @@ import { ForgotPassword } from "./pages/ForgotPassword";
 import { Dashboard } from "./pages/Dashboard";
 import { Products } from "./pages/Products";
 import { Categories } from "./pages/Categories";
+import { MLAnalytics } from "./pages/MLAnalytics";
 import { Suppliers } from "./pages/Suppliers";
 import { StockIn } from "./pages/StockIn";
 import { StockOut } from "./pages/StockOut";
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
           { index: true, Component: Dashboard },
           { path: "products", Component: Products },
           { path: "categories", Component: Categories },
+          { path: "ml-analytics", Component: MLAnalytics },
           { path: "suppliers", Component: Suppliers },
           { path: "stock-in", Component: StockIn },
           { path: "stock-out", Component: StockOut },

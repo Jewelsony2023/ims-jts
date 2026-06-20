@@ -17,6 +17,8 @@ public class InventoryDbContext : DbContext
 
     public DbSet<Category> Categories { get; set; }
 
+    public DbSet<ForecastResult> ForecastResults { get; set; }
+
     public DbSet<Product> Products { get; set; }
 
     public DbSet<ProductSpecification> ProductSpecifications { get; set; }
@@ -53,6 +55,9 @@ public class InventoryDbContext : DbContext
             .HasOne(ps => ps.Product)
             .WithMany()
             .HasForeignKey(ps => ps.ProductId);
+
+        modelBuilder.Entity<ForecastResult>()
+            .HasKey(fr => fr.ForecastId);
 
         modelBuilder.Entity<PurchaseOrder>()
             .HasOne(po => po.Supplier)

@@ -16,11 +16,6 @@ import {
 import { Button } from "../ui/button";
 
 export const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Users, label: "Suppliers", path: "/suppliers" },
-  { icon: FolderTree, label: "Categories", path: "/categories" },
-  { icon: Package, label: "Products", path: "/products" },
-  { icon: BarChart3, label: "ML Analytics", path: "/ml-analytics" },
   {
     icon: Archive,
     label: "Inventory",
@@ -36,6 +31,11 @@ export const navItems = [
     ],
   },
   { icon: UserCog, label: "User Management", path: "/users" },
+  { icon: BarChart3, label: "ML Analytics", path: "/ml-analytics" },
+  { icon: Package, label: "Products", path: "/products" },
+  { icon: FolderTree, label: "Categories", path: "/categories" },
+  { icon: Users, label: "Suppliers", path: "/suppliers" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
 ];
 
 function isItemActive(pathname: string, item: (typeof navItems)[number]) {
@@ -149,3 +149,4 @@ export function Sidebar({ isMenuOpen, onCloseMenu }: SidebarProps) {
     </>
   );
 }
+

@@ -16,6 +16,8 @@ import { Skeleton } from "../components/ui/skeleton";
 type ForecastResult = {
   forecastId: number;
   productCode: string;
+  productName: string;
+  categoryName: string;
   forecastDemand: number;
   recommendedOrder: number;
   riskLevel: string;
@@ -143,7 +145,8 @@ export function MLAnalytics() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product Code</TableHead>
+                <TableHead>Product Name</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Forecast Demand</TableHead>
                 <TableHead>Recommended Order</TableHead>
                 <TableHead>Risk Level</TableHead>
@@ -153,8 +156,9 @@ export function MLAnalytics() {
               {forecastResults.map((forecast) => (
                 <TableRow key={forecast.forecastId}>
                   <TableCell className="font-medium">
-                    {forecast.productCode}
+                    {forecast.productName}
                   </TableCell>
+                  <TableCell>{forecast.categoryName}</TableCell>
                   <TableCell>
                     {Number(forecast.forecastDemand).toLocaleString()}
                   </TableCell>
@@ -166,7 +170,7 @@ export function MLAnalytics() {
               ))}
               {!isLoading && forecastResults.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center text-slate-500">
+                  <TableCell colSpan={5} className="py-8 text-center text-slate-500">
                     No forecast results available.
                   </TableCell>
                 </TableRow>

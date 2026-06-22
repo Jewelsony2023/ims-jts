@@ -1,6 +1,6 @@
+using InventoryManagement.API.DTOs;
 using InventoryManagement.API.Interfaces.Repositories;
 using InventoryManagement.API.Interfaces.Services;
-using InventoryManagement.API.Models;
 
 namespace InventoryManagement.API.Services;
 
@@ -13,7 +13,7 @@ public class ForecastService : IForecastService
         _forecastRepository = forecastRepository;
     }
 
-    public Task<List<ForecastResult>> GetForecastResultsAsync()
+    public Task<List<ForecastResultDto>> GetForecastResultsAsync()
     {
         return _forecastRepository.GetForecastResultsAsync();
     }

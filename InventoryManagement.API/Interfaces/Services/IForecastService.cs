@@ -1,8 +1,8 @@
-using InventoryManagement.API.Models;
+using InventoryManagement.API.DTOs;
 
 namespace InventoryManagement.API.Interfaces.Services;
 
 public interface IForecastService
 {
-    Task<List<ForecastResult>> GetForecastResultsAsync();
+    Task<List<ForecastResultDto>> GetForecastResultsAsync();
 }

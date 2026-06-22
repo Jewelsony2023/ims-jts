@@ -16,6 +16,7 @@ import {
 import { Button } from "../ui/button";
 
 export const navItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   {
     icon: Archive,
     label: "Inventory",
@@ -30,12 +31,13 @@ export const navItems = [
       { icon: TrendingDown, label: "Stock Out", path: "/stock-out" },
     ],
   },
-  { icon: UserCog, label: "User Management", path: "/users" },
+  
   { icon: BarChart3, label: "ML Analytics", path: "/ml-analytics" },
   { icon: Package, label: "Products", path: "/products" },
   { icon: FolderTree, label: "Categories", path: "/categories" },
   { icon: Users, label: "Suppliers", path: "/suppliers" },
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: UserCog, label: "User Management", path: "/users" },
+  
 ];
 
 function isItemActive(pathname: string, item: (typeof navItems)[number]) {

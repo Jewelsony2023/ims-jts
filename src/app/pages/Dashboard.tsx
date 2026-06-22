@@ -27,15 +27,49 @@ import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Skeleton } from "../components/ui/skeleton";
 
+type DashboardStats = {
+  totalUsers: number;
+  totalProducts: number;
+  totalSuppliers: number;
+  lowStockItems: number;
+  inventoryValue: number;
+  revenue: number;
+  profit: number;
+};
 
+type ActivityFeedItem = {
+  title: string;
+  description: string;
+  createdAt: string;
+};
 
+type StockMovementData = {
+  month: string;
+  stockIn: number;
+  stockOut: number;
+};
 
+type DashboardAlerts = {
+  lowStockProducts: string[];
+  expiringProducts: string[];
+  expiredProducts: string[];
+};
 
+type ForecastResult = {
+  forecastId: number;
+  productCode: string;
+  productName: string;
+  categoryName: string;
+  forecastDemand: number;
+  recommendedOrder: number;
+  riskLevel: string;
+  createdAt: string;
+};
 
 const kpiData = [
   {
     title: "Revenue",
-    value: "₹0",
+    value: "?0",
     trend: "+0%",
     positive: true,
     icon: DollarSign,
@@ -43,7 +77,7 @@ const kpiData = [
   },
   {
     title: "Profit",
-    value: "₹0",
+    value: "?0",
     trend: "+0%",
     positive: true,
     icon: TrendingUp,
@@ -51,7 +85,7 @@ const kpiData = [
   },
   {
     title: "Inventory Value",
-    value: "₹0",
+    value: "?0",
     trend: "+0%",
     positive: true,
     icon: Package,
@@ -83,65 +117,27 @@ const kpiData = [
   },
 ];
 
-
-
-
-type DashboardStats = {
-  totalUsers: number;
-  totalProducts: number;
-  totalSuppliers: number;
-  lowStockItems: number;
-  inventoryValue: number;
-  revenue: number;
-  profit: number;
-};
-type ActivityFeedItem = {
-  title: string;
-  description: string;
-  createdAt: string;
-};
-type StockMovementData = {
-  month: string;
-  stockIn: number;
-  stockOut: number;
-};
-type DashboardAlerts = {
-  lowStockProducts: string[];
-  expiringProducts: string[];
-  expiredProducts: string[];
-};
-
 export function Dashboard() {
-  const [dashboardStats, setDashboardStats] =
-    useState<DashboardStats>({
-      totalUsers: 0,
-      totalProducts: 0,
-      totalSuppliers: 0,
-      lowStockItems: 0,
-      inventoryValue: 0,
-      revenue: 0,
-      profit: 0,
-    });
-  //state variables for activity feed and alerts
-  const [activityFeed, setActivityFeed] =
-    useState<ActivityFeedItem[]>([]);
-  const [revenueView, setRevenueView] =
-    useState("monthly");
-  //state variable for stock movement data
-  const [stockMovementData, setStockMovementData] =
-    useState<StockMovementData[]>([]);
-  
-  const [dashboardAlerts, setDashboardAlerts] =
-    useState<DashboardAlerts>({
-      lowStockProducts: [],
-      expiringProducts: [],
-      expiredProducts: [],
-    });
-  const [revenueTrend, setRevenueTrend] =
-    useState<any[]>([]);
-
-  const [inventoryValue, setInventoryValue] =
-    useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalProducts: 0,
+    totalSuppliers: 0,
+    lowStockItems: 0,
+    inventoryValue: 0,
+    revenue: 0,
+    profit: 0,
+  });
+  const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([]);
+  const [revenueView, setRevenueView] = useState("monthly");
+  const [stockMovementData, setStockMovementData] = useState<StockMovementData[]>([]);
+  const [dashboardAlerts, setDashboardAlerts] = useState<DashboardAlerts>({
+    lowStockProducts: [],
+    expiringProducts: [],
+    expiredProducts: [],
+  });
+  const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
+  const [inventoryValue, setInventoryValue] = useState<any[]>([]);
+  const [forecastResults, setForecastResults] = useState<ForecastResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -153,26 +149,16 @@ export function Dashboard() {
           alertsRes,
           stockMovementRes,
           revenueTrendRes,
-          inventoryValueRes
+          inventoryValueRes,
+          forecastRes,
         ] = await Promise.all([
-          api.get(
-            `${import.meta.env.VITE_API_URL}/api/dashboard/stats`
-          ),
-          api.get(
-            `${import.meta.env.VITE_API_URL}/api/dashboard/activity-feed`
-          ),
-          api.get(
-            `${import.meta.env.VITE_API_URL}/api/dashboard/alerts`
-          ),
-          api.get(
-            `${import.meta.env.VITE_API_URL}/api/dashboard/stock-movement`
-          ),
-          api.get(
-            `${import.meta.env.VITE_API_URL}/api/dashboard/revenue-trend?view=${revenueView}`
-          ),
-          api.get(
-            `${import.meta.env.VITE_API_URL}/api/dashboard/inventory-value-trend`
-          )
+          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/stats`),
+          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/activity-feed`),
+          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/alerts`),
+          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/stock-movement`),
+          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/revenue-trend?view=${revenueView}`),
+          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/inventory-value-trend`),
+          api.get(`${import.meta.env.VITE_API_URL}/api/forecasts`),
         ]);
 
         setDashboardStats(statsRes.data);
@@ -181,11 +167,10 @@ export function Dashboard() {
         setStockMovementData(stockMovementRes.data);
         setRevenueTrend(revenueTrendRes.data);
         setInventoryValue(inventoryValueRes.data);
-      }
-      catch (error) {
+        setForecastResults(forecastRes.data);
+      } catch (error) {
         console.error(error);
-      }
-      finally {
+      } finally {
         setTimeout(() => {
           setIsLoading(false);
         }, 1500);
@@ -194,53 +179,64 @@ export function Dashboard() {
 
     fetchDashboardData();
   }, [revenueView]);
-    const dashboardKpiData = kpiData.map((kpi) => {
-      if (kpi.title === "Revenue") {
-        return {
-          ...kpi,
-          value: `₹${dashboardStats.revenue.toLocaleString()}`
-        };
-      }
 
-      if (kpi.title === "Profit") {
-        return {
-          ...kpi,
-          value: `₹${dashboardStats.profit.toLocaleString()}`
-        };
-      }
+  const dashboardKpiData = kpiData.map((kpi) => {
+    if (kpi.title === "Revenue") {
+      return { ...kpi, value: `?${dashboardStats.revenue.toLocaleString()}` };
+    }
 
-      if (kpi.title === "Inventory Value") {
-        return {
-          ...kpi,
-          value: `₹${dashboardStats.inventoryValue.toLocaleString()}`
-        };
-      }
+    if (kpi.title === "Profit") {
+      return { ...kpi, value: `?${dashboardStats.profit.toLocaleString()}` };
+    }
 
-      if (kpi.title === "Total Products") {
-        return {
-          ...kpi,
-          value: dashboardStats.totalProducts.toString()
-        };
-      }
+    if (kpi.title === "Inventory Value") {
+      return { ...kpi, value: `?${dashboardStats.inventoryValue.toLocaleString()}` };
+    }
 
-      if (kpi.title === "Total Suppliers") {
-        return {
-          ...kpi,
-          value: dashboardStats.totalSuppliers.toString()
-        };
-      }
+    if (kpi.title === "Total Products") {
+      return { ...kpi, value: dashboardStats.totalProducts.toString() };
+    }
 
-      if (kpi.title === "Total Users") {
-        return {
-          ...kpi,
-          value: (dashboardStats.totalUsers ?? 0).toString()
-        };
-      }
+    if (kpi.title === "Total Suppliers") {
+      return { ...kpi, value: dashboardStats.totalSuppliers.toString() };
+    }
 
-      return kpi;
-    });
+    if (kpi.title === "Total Users") {
+      return { ...kpi, value: (dashboardStats.totalUsers ?? 0).toString() };
+    }
 
+    return kpi;
+  });
 
+  const topForecastProduct =
+    forecastResults.length > 0
+      ? forecastResults.reduce((highest, current) =>
+          current.forecastDemand > highest.forecastDemand ? current : highest,
+        )
+      : null;
+
+  const highRiskProducts = forecastResults.filter(
+    (forecast) => forecast.riskLevel.toUpperCase() === "HIGH",
+  ).length;
+
+  const forecastKpiCards = [
+    {
+      title: "Top Forecast Product",
+      value: topForecastProduct ? topForecastProduct.productName : "-",
+      subtitle: topForecastProduct
+        ? `Forecast demand: ${topForecastProduct.forecastDemand.toLocaleString()}`
+        : "No forecast data available",
+      icon: TrendingUp,
+      color: "bg-slate-700",
+    },
+    {
+      title: "High Risk Products",
+      value: highRiskProducts.toString(),
+      subtitle: "Products classified as HIGH risk",
+      icon: AlertTriangle,
+      color: "bg-orange-500",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -259,16 +255,45 @@ export function Dashboard() {
                   {isLoading ? (
                     <Skeleton className="mx-auto h-8 w-24" />
                   ) : (
-                    <h3 className="text-2xl font-bold text-slate-800">
-                      {kpi.value}
-                    </h3>
+                    <h3 className="text-2xl font-bold text-slate-800">{kpi.value}</h3>
                   )}
                   {isLoading ? (
                     <Skeleton className="mx-auto mt-2 h-4 w-20" />
                   ) : (
-                    <p className="text-sm text-slate-500">
-                      {kpi.title}
-                    </p>
+                    <p className="text-sm text-slate-500">{kpi.title}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {forecastKpiCards.map((card) => {
+          const Icon = card.icon;
+
+          return (
+            <Card key={card.title} className="border-none shadow-md">
+              <CardContent className="p-5">
+                <div className="mb-4 flex items-center justify-center">
+                  <div className={`${card.color} rounded-lg p-3`}>
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="text-center">
+                  {isLoading ? (
+                    <Skeleton className="mx-auto h-8 w-36" />
+                  ) : (
+                    <h3 className="text-2xl font-bold text-slate-800">{card.value}</h3>
+                  )}
+                  {isLoading ? (
+                    <Skeleton className="mx-auto mt-2 h-4 w-32" />
+                  ) : (
+                    <>
+                      <p className="text-sm text-slate-500">{card.title}</p>
+                      <p className="mt-1 text-sm text-slate-600">{card.subtitle}</p>
+                    </>
                   )}
                 </div>
               </CardContent>
@@ -280,63 +305,45 @@ export function Dashboard() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="border-none shadow-md">
           <CardHeader>
-            <CardTitle>
-              Low Stock Products
-            </CardTitle>
+            <CardTitle>Low Stock Products</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <div className="max-h-[12.5rem] overflow-y-auto space-y-3 pr-1">
-            {dashboardAlerts.lowStockProducts.map(product => (
-              <div
-                key={product}
-                className="rounded-lg bg-slate-50 p-3"
-              >
-                {product}
-              </div>
-            ))}
+            <div className="max-h-[12.5rem] space-y-3 overflow-y-auto pr-1">
+              {dashboardAlerts.lowStockProducts.map((product) => (
+                <div key={product} className="rounded-lg bg-slate-50 p-3">
+                  {product}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-md">
           <CardHeader>
-            <CardTitle>
-              Expiring Products
-            </CardTitle>
+            <CardTitle>Expiring Products</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <div className="max-h-[12.5rem] overflow-y-auto space-y-3 pr-1">
-            {dashboardAlerts.expiringProducts.map(product => (
-              <div
-                key={product}
-                className="rounded-lg bg-slate-50 p-3"
-              >
-                {product}
-              </div>
-            ))}
+            <div className="max-h-[12.5rem] space-y-3 overflow-y-auto pr-1">
+              {dashboardAlerts.expiringProducts.map((product) => (
+                <div key={product} className="rounded-lg bg-slate-50 p-3">
+                  {product}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-md">
           <CardHeader>
-            <CardTitle>
-              Expired Products
-            </CardTitle>
+            <CardTitle>Expired Products</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <div className="max-h-[12.5rem] overflow-y-auto space-y-3 pr-1">
-            {dashboardAlerts.expiredProducts.map(product => (
-              <div
-                key={product}
-                className="rounded-lg bg-slate-50 p-3"
-              >
-                {product}
-              </div>
-            ))}
+            <div className="max-h-[12.5rem] space-y-3 overflow-y-auto pr-1">
+              {dashboardAlerts.expiredProducts.map((product) => (
+                <div key={product} className="rounded-lg bg-slate-50 p-3">
+                  {product}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -344,9 +351,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ChartCard title="Revenue Trend">
-
           <div className="mb-4 flex gap-2">
-
             <button
               onClick={() => setRevenueView("weekly")}
               className={
@@ -357,7 +362,6 @@ export function Dashboard() {
             >
               Weekly
             </button>
-
             <button
               onClick={() => setRevenueView("monthly")}
               className={
@@ -368,14 +372,8 @@ export function Dashboard() {
             >
               Monthly
             </button>
-
           </div>
-
           <ResponsiveContainer width="100%" height={300}>
-        
-
-
-          
             <LineChart data={revenueTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="month" stroke="#64748b" />
@@ -420,12 +418,9 @@ export function Dashboard() {
           <CardHeader>
             <CardTitle className="text-lg">Activity Feed</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+          <CardContent className="max-h-[600px] space-y-4 overflow-y-auto">
             {activityFeed.map((activity, index) => (
-              <div
-                key={index}
-                className="rounded-lg border border-slate-200 bg-white p-4"
-              >
+              <div key={index} className="rounded-lg border border-slate-200 bg-white p-4">
                 <Badge
                   className={
                     activity.title === "StockIn"
@@ -435,15 +430,8 @@ export function Dashboard() {
                 >
                   {activity.title}
                 </Badge>
-
-                <p className="mt-3 font-semibold text-slate-800">
-                  {activity.description}
-                </p>
-
-                <p className="text-sm text-slate-500">
-                  {new Date(activity.createdAt)
-                    .toLocaleString()}
-                </p>
+                <p className="mt-3 font-semibold text-slate-800">{activity.description}</p>
+                <p className="text-sm text-slate-500">{new Date(activity.createdAt).toLocaleString()}</p>
               </div>
             ))}
           </CardContent>

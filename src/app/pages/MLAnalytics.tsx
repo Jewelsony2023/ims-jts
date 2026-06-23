@@ -1,23 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, ShieldAlert } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import api from "../../lib/api";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Skeleton } from "../components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-
-// existing types preserved
 
 type ForecastResult = {
   forecastId: number;
@@ -61,27 +57,21 @@ function formatDisplayName(value: string, mapping: Record<string, string>) {
   return mapping[value] ?? value;
 }
 
-function MetricCardIcon({ className }: { className?: string }) {
-  return <BarChart3 className={className} />;
-}
-
 function MetricCard({
   title,
   value,
-  color,
   loading,
 }: {
   title: string;
   value: string;
-  color: string;
   loading: boolean;
 }) {
   return (
     <Card className="border-none shadow-md">
       <CardContent className="p-5">
         <div className="mb-4 flex items-center justify-center">
-          <div className={`${color} rounded-lg p-3`}>
-            <MetricCardIcon className="h-5 w-5 text-white" />
+          <div className="rounded-lg bg-slate-700 p-3">
+            <BarChart3 className="h-5 w-5 text-white" />
           </div>
         </div>
         <div className="text-center">
@@ -132,23 +122,20 @@ export function MLAnalytics() {
   }, []);
 
   const sortedForecastResults = useMemo(
-    () =>
-      [...forecastResults].sort(
-        (left, right) => right.forecastDemand - left.forecastDemand,
-      ),
+    () => [...forecastResults].sort((left, right) => right.forecastDemand - left.forecastDemand),
     [forecastResults],
   );
 
-  const highRiskProducts = forecastResults.filter(
-    (forecast) => forecast.riskLevel.toUpperCase() === "HIGH",
-  ).length;
-
-  const metricLookup = useMemo(() => {
-    return new Map(mlMetrics.map((metric) => [metric.modelName.toLowerCase(), metric.mape]));
-  }, [mlMetrics]);
+  const metricLookup = useMemo(
+    () => new Map(mlMetrics.map((metric) => [metric.modelName.toLowerCase(), metric.mape])),
+    [mlMetrics],
+  );
 
   const selectedModel = useMemo(() => {
-    if (mlMetrics.length === 0) return null;
+    if (mlMetrics.length === 0) {
+      return null;
+    }
+
     return [...mlMetrics].sort((left, right) => left.mape - right.mape)[0] ?? null;
   }, [mlMetrics]);
 
@@ -159,9 +146,7 @@ export function MLAnalytics() {
     }))
     .slice(0, 10) satisfies ForecastChartPoint[];
 
-  const forecastTableData = sortedForecastResults.length <= 10
-    ? sortedForecastResults
-    : sortedForecastResults.slice(0, 10);
+  const forecastTableData = sortedForecastResults.length <= 10 ? sortedForecastResults : sortedForecastResults.slice(0, 10);
 
   const getRiskBadge = (riskLevel: string) => {
     switch (riskLevel.toUpperCase()) {
@@ -176,27 +161,17 @@ export function MLAnalytics() {
     }
   };
 
+  const renderMetricValue = (modelName: string) => {
+    const value = metricLookup.get(modelName.toLowerCase());
+    return typeof value === "number" ? `${value.toFixed(2)}%` : "-";
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <MetricCard
-          title="Prophet"
-          value={metricLookup.has("prophet") ? `${metricLookup.get("prophet")!.toFixed(2)}%` : "-"}
-          color="bg-slate-700"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="LightGBM"
-          value={metricLookup.has("lightgbm") ? `${metricLookup.get("lightgbm")!.toFixed(2)}%` : "-"}
-          color="bg-emerald-500"
-          loading={isLoading}
-        />
-        <MetricCard
-          title="ARIMA"
-          value={metricLookup.has("arima") ? `${metricLookup.get("arima")!.toFixed(2)}%` : "-"}
-          color="bg-orange-500"
-          loading={isLoading}
-        />
+        <MetricCard title="Prophet" value={renderMetricValue("Prophet")} loading={isLoading} />
+        <MetricCard title="LightGBM" value={renderMetricValue("LightGBM")} loading={isLoading} />
+        <MetricCard title="ARIMA" value={renderMetricValue("ARIMA")} loading={isLoading} />
       </div>
 
       <Card className="border-none shadow-md">
@@ -253,12 +228,7 @@ export function MLAnalytics() {
                   stroke="#64748b"
                   tickFormatter={(value) => Number(value).toLocaleString()}
                 />
-                <YAxis
-                  type="category"
-                  dataKey="productName"
-                  stroke="#64748b"
-                  width={180}
-                />
+                <YAxis type="category" dataKey="productName" stroke="#64748b" width={180} />
                 <Tooltip
                   formatter={(value) => Number(value).toLocaleString()}
                   labelStyle={{ color: "#0f172a" }}
@@ -278,9 +248,7 @@ export function MLAnalytics() {
       <Card className="border-none shadow-md">
         <CardHeader>
           <CardTitle className="text-lg">Forecast Results</CardTitle>
-          <p className="text-sm text-slate-600">
-            Forecast outputs ordered by demand, highest first.
-          </p>
+          <p className="text-sm text-slate-600">Forecast outputs ordered by demand, highest first.</p>
         </CardHeader>
         <CardContent>
           <Table>
@@ -299,12 +267,8 @@ export function MLAnalytics() {
               {forecastTableData.map((forecast, index) => (
                 <TableRow key={forecast.forecastId}>
                   <TableCell className="font-medium">#{index + 1}</TableCell>
-                  <TableCell className="font-medium">
-                    {formatDisplayName(forecast.productName, productDisplayMap)}
-                  </TableCell>
-                  <TableCell>
-                    {formatDisplayName(forecast.categoryName, categoryDisplayMap)}
-                  </TableCell>
+                  <TableCell className="font-medium">{formatDisplayName(forecast.productName, productDisplayMap)}</TableCell>
+                  <TableCell>{formatDisplayName(forecast.categoryName, categoryDisplayMap)}</TableCell>
                   <TableCell>{Number(forecast.currentInventory).toLocaleString()}</TableCell>
                   <TableCell>{Number(forecast.forecastDemand).toLocaleString()}</TableCell>
                   <TableCell>{Number(forecast.recommendedOrder).toLocaleString()}</TableCell>

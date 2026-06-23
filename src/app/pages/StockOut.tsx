@@ -463,8 +463,8 @@ export function StockOut() {
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {[...new Set(batchOptions.map((item) => item.productName))].map((product) => (
+                        <SelectContent className="max-h-[300px] overflow-y-auto">
+                          {sortedProductNames.map((product) => (
                             <SelectItem key={product} value={product}>
                               {product}
                             </SelectItem>
@@ -491,7 +491,7 @@ export function StockOut() {
                         <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select batch" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px] overflow-y-auto">
                           {batchOptions
                             .filter((item) => {
                               const alreadySelected = rows.some(
@@ -507,7 +507,7 @@ export function StockOut() {
                               <SelectItem
                                 key={item.productBatchId}
                                 value={item.productBatchId.toString()}
-                            >
+                              >
                                 {`${item.batchNumber} | ${formatExpiryLabel(getBatchExpiryValue(item))} | Qty ${item.quantityAvailable}`}
                               </SelectItem>
                             ))}
@@ -554,8 +554,8 @@ export function StockOut() {
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="font-semibold text-slate-800">₹{row.batchCostPrice.toFixed(2)}</TableCell>
-                    <TableCell className="font-semibold text-slate-800">₹{row.batchSellingPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-slate-800">â‚¹{row.batchCostPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-slate-800">â‚¹{row.batchSellingPrice.toFixed(2)}</TableCell>
                     <TableCell>
                       <div className="space-y-2">
                       <Input
@@ -705,3 +705,4 @@ export function StockOut() {
     </div>
   );
 }
+

@@ -17,11 +17,7 @@ import { Button } from "../ui/button";
 
 export const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  {
-    icon: Archive,
-    label: "Inventory",
-    path: "/inventory",
-  },
+  { icon: Archive, label: "Inventory", path: "/inventory" },
   {
     icon: FileText,
     label: "Stock Register",
@@ -31,13 +27,11 @@ export const navItems = [
       { icon: TrendingDown, label: "Stock Out", path: "/stock-out" },
     ],
   },
-  
-  { icon: BarChart3, label: "ML Analytics", path: "/ml-analytics" },
   { icon: Package, label: "Products", path: "/products" },
   { icon: FolderTree, label: "Categories", path: "/categories" },
   { icon: Users, label: "Suppliers", path: "/suppliers" },
+  { icon: BarChart3, label: "ML Analytics", path: "/ml-analytics" },
   { icon: UserCog, label: "User Management", path: "/users" },
-  
 ];
 
 function isItemActive(pathname: string, item: (typeof navItems)[number]) {
@@ -60,10 +54,7 @@ type SidebarProps = {
 export function Sidebar({ isMenuOpen, onCloseMenu }: SidebarProps) {
   const location = useLocation();
   const role = localStorage.getItem("role");
-  const visibleNavItems =
-    role === "Administrator"
-      ? navItems
-      : navItems.filter((item) => item.path !== "/users");
+  const visibleNavItems = navItems.filter((item) => item.path !== "/users");
 
   return (
     <>
@@ -121,25 +112,25 @@ export function Sidebar({ isMenuOpen, onCloseMenu }: SidebarProps) {
                 {item.children && (
                   <div className="mx-3 grid max-h-0 overflow-hidden border-l border-slate-700 pl-4 transition-all duration-300 group-hover:mb-2 group-hover:mt-1 group-hover:max-h-40">
                     <div className="space-y-1">
-                    {item.children.map((child) => {
-                      const ChildIcon = child.icon;
-                      const childActive = location.pathname === child.path;
-                      return (
-                        <Link
-                          key={child.path}
-                          to={child.path}
-                          onClick={onCloseMenu}
-                          className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                            childActive
-                              ? "bg-slate-700 text-white"
-                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                          }`}
-                        >
-                          <ChildIcon className="h-4 w-4" />
-                          {child.label}
-                        </Link>
-                      );
-                    })}
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        const childActive = location.pathname === child.path;
+                        return (
+                          <Link
+                            key={child.path}
+                            to={child.path}
+                            onClick={onCloseMenu}
+                            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                              childActive
+                                ? "bg-slate-700 text-white"
+                                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                            }`}
+                          >
+                            <ChildIcon className="h-4 w-4" />
+                            {child.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -151,4 +142,3 @@ export function Sidebar({ isMenuOpen, onCloseMenu }: SidebarProps) {
     </>
   );
 }
-

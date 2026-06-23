@@ -16,5 +16,7 @@ public class ForecastResultDto
 
     public string RiskLevel { get; set; } = string.Empty;
 
+    public int CurrentInventory { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }

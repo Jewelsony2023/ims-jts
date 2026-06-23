@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
-  Clock,
   DollarSign,
   Package,
-  ShoppingCart,
-  TrendingDown,
   TrendingUp,
   Truck,
   Users,
@@ -63,58 +60,17 @@ type ForecastResult = {
   forecastDemand: number;
   recommendedOrder: number;
   riskLevel: string;
+  currentInventory: number;
   createdAt: string;
 };
 
 const kpiData = [
-  {
-    title: "Revenue",
-    value: "?0",
-    trend: "+0%",
-    positive: true,
-    icon: DollarSign,
-    color: "bg-emerald-500",
-  },
-  {
-    title: "Profit",
-    value: "?0",
-    trend: "+0%",
-    positive: true,
-    icon: TrendingUp,
-    color: "bg-cyan-500",
-  },
-  {
-    title: "Inventory Value",
-    value: "?0",
-    trend: "+0%",
-    positive: true,
-    icon: Package,
-    color: "bg-blue-500",
-  },
-  {
-    title: "Total Products",
-    value: "0",
-    trend: "+0",
-    positive: true,
-    icon: Package,
-    color: "bg-slate-600",
-  },
-  {
-    title: "Total Suppliers",
-    value: "0",
-    trend: "+0",
-    positive: true,
-    icon: Truck,
-    color: "bg-purple-500",
-  },
-  {
-    title: "Total Users",
-    value: "0",
-    trend: "+0",
-    positive: true,
-    icon: Users,
-    color: "bg-orange-500",
-  },
+  { title: "Revenue", value: "0", icon: DollarSign, color: "bg-emerald-500" },
+  { title: "Profit", value: "0", icon: TrendingUp, color: "bg-cyan-500" },
+  { title: "Inventory Value", value: "0", icon: Package, color: "bg-blue-500" },
+  { title: "Total Products", value: "0", icon: Package, color: "bg-slate-600" },
+  { title: "Total Suppliers", value: "0", icon: Truck, color: "bg-purple-500" },
+  { title: "Total Users", value: "0", icon: Users, color: "bg-orange-500" },
 ];
 
 export function Dashboard() {
@@ -136,7 +92,6 @@ export function Dashboard() {
     expiredProducts: [],
   });
   const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
-  const [inventoryValue, setInventoryValue] = useState<any[]>([]);
   const [forecastResults, setForecastResults] = useState<ForecastResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -149,7 +104,6 @@ export function Dashboard() {
           alertsRes,
           stockMovementRes,
           revenueTrendRes,
-          inventoryValueRes,
           forecastRes,
         ] = await Promise.all([
           api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/stats`),
@@ -157,7 +111,6 @@ export function Dashboard() {
           api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/alerts`),
           api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/stock-movement`),
           api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/revenue-trend?view=${revenueView}`),
-          api.get(`${import.meta.env.VITE_API_URL}/api/dashboard/inventory-value-trend`),
           api.get(`${import.meta.env.VITE_API_URL}/api/forecasts`),
         ]);
 
@@ -166,14 +119,11 @@ export function Dashboard() {
         setDashboardAlerts(alertsRes.data);
         setStockMovementData(stockMovementRes.data);
         setRevenueTrend(revenueTrendRes.data);
-        setInventoryValue(inventoryValueRes.data);
         setForecastResults(forecastRes.data);
       } catch (error) {
         console.error(error);
       } finally {
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 1500);
+        setTimeout(() => setIsLoading(false), 1500);
       }
     };
 
@@ -182,15 +132,15 @@ export function Dashboard() {
 
   const dashboardKpiData = kpiData.map((kpi) => {
     if (kpi.title === "Revenue") {
-      return { ...kpi, value: `?${dashboardStats.revenue.toLocaleString()}` };
+      return { ...kpi, value: dashboardStats.revenue.toLocaleString() };
     }
 
     if (kpi.title === "Profit") {
-      return { ...kpi, value: `?${dashboardStats.profit.toLocaleString()}` };
+      return { ...kpi, value: dashboardStats.profit.toLocaleString() };
     }
 
     if (kpi.title === "Inventory Value") {
-      return { ...kpi, value: `?${dashboardStats.inventoryValue.toLocaleString()}` };
+      return { ...kpi, value: dashboardStats.inventoryValue.toLocaleString() };
     }
 
     if (kpi.title === "Total Products") {
@@ -302,53 +252,6 @@ export function Dashboard() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle>Low Stock Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-[12.5rem] space-y-3 overflow-y-auto pr-1">
-              {dashboardAlerts.lowStockProducts.map((product) => (
-                <div key={product} className="rounded-lg bg-slate-50 p-3">
-                  {product}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle>Expiring Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-[12.5rem] space-y-3 overflow-y-auto pr-1">
-              {dashboardAlerts.expiringProducts.map((product) => (
-                <div key={product} className="rounded-lg bg-slate-50 p-3">
-                  {product}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle>Expired Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-[12.5rem] space-y-3 overflow-y-auto pr-1">
-              {dashboardAlerts.expiredProducts.map((product) => (
-                <div key={product} className="rounded-lg bg-slate-50 p-3">
-                  {product}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ChartCard title="Revenue Trend">
           <div className="mb-4 flex gap-2">
@@ -386,16 +289,55 @@ export function Dashboard() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Inventory Value Trend (Qty x Batch Cost)">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={inventoryValue}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="month" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={3} dot={{ fill: "#0ea5e9", r: 5 }} />
-            </LineChart>
-          </ResponsiveContainer>
+        <ChartCard title="Forecast Demand by Product">
+          <p className="mb-4 text-sm text-slate-600">
+            Top 5 products by forecast demand.
+          </p>
+          {isLoading ? (
+            <div className="h-[300px] space-y-4 rounded-lg bg-slate-50 p-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-[220px] w-full" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={forecastResults
+                  .slice()
+                  .sort((left, right) => right.forecastDemand - left.forecastDemand)
+                  .slice(0, 5)
+                  .map((forecast) => ({
+                    productName: forecast.productName,
+                    forecastDemand: forecast.forecastDemand,
+                  }))}
+                layout="vertical"
+                margin={{ top: 8, right: 24, left: 24, bottom: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  type="number"
+                  dataKey="forecastDemand"
+                  stroke="#64748b"
+                  tickFormatter={(value) => Number(value).toLocaleString()}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="productName"
+                  stroke="#64748b"
+                  width={180}
+                />
+                <Tooltip
+                  formatter={(value) => Number(value).toLocaleString()}
+                  labelStyle={{ color: "#0f172a" }}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+                  }}
+                />
+                <Bar dataKey="forecastDemand" fill="#0f766e" radius={[0, 10, 10, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </ChartCard>
       </div>
 

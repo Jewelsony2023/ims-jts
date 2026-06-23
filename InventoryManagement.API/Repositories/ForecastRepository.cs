@@ -16,30 +16,40 @@ public class ForecastRepository : IForecastRepository
 
     public Task<List<ForecastResultDto>> GetForecastResultsAsync()
     {
-        return _context.ForecastResults
-            .AsNoTracking()
-            .Join(
-                _context.Products.AsNoTracking(),
-                forecast => forecast.ProductCode,
-                product => product.SKU,
-                (forecast, product) => new { forecast, product })
-            .GroupJoin(
-                _context.Categories.AsNoTracking(),
-                item => item.product.CategoryId,
-                category => category.CategoryId,
-                (item, categories) => new { item.forecast, item.product, category = categories.FirstOrDefault() })
-            .OrderByDescending(result => result.forecast.ForecastDemand)
-            .Select(result => new ForecastResultDto
+        var query =
+            from forecast in _context.ForecastResults.AsNoTracking()
+            join product in _context.Products.AsNoTracking()
+                on forecast.ProductCode equals product.SKU
+            join category in _context.Categories.AsNoTracking()
+                on product.CategoryId equals category.CategoryId into categoryGroup
+            from category in categoryGroup.DefaultIfEmpty()
+            join batch in _context.ProductBatches.AsNoTracking()
+                on product.ProductId equals batch.ProductId into batchGroup
+            let currentInventory = batchGroup.Sum(item => (int?)item.QuantityAvailable) ?? 0
+            let recommendedOrder = forecast.ForecastDemand > currentInventory
+                ? forecast.ForecastDemand - currentInventory
+                : 0m
+            let coverageRatio = forecast.ForecastDemand == 0
+                ? 0m
+                : currentInventory / forecast.ForecastDemand
+            orderby forecast.ForecastDemand descending
+            select new ForecastResultDto
             {
-                ForecastId = result.forecast.ForecastId,
-                ProductCode = result.forecast.ProductCode,
-                ProductName = result.product.ProductName,
-                CategoryName = result.category == null ? string.Empty : result.category.CategoryName,
-                ForecastDemand = result.forecast.ForecastDemand,
-                RecommendedOrder = result.forecast.RecommendedOrder,
-                RiskLevel = result.forecast.RiskLevel,
-                CreatedAt = result.forecast.CreatedAt
-            })
-            .ToListAsync();
+                ForecastId = forecast.ForecastId,
+                ProductCode = forecast.ProductCode,
+                ProductName = product.ProductName,
+                CategoryName = category != null ? category.CategoryName : string.Empty,
+                ForecastDemand = forecast.ForecastDemand,
+                RecommendedOrder = recommendedOrder,
+                RiskLevel = coverageRatio >= 1.2m
+                    ? "LOW"
+                    : coverageRatio >= 0.8m
+                        ? "MEDIUM"
+                        : "HIGH",
+                CurrentInventory = currentInventory,
+                CreatedAt = forecast.CreatedAt
+            };
+
+        return query.ToListAsync();
     }
 }

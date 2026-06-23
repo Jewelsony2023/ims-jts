@@ -47,10 +47,10 @@ public class StockTransactionRepository : IStockTransactionRepository
                 DaysRemaining = (int)(item.ProductBatch.ExpiryDate.Date - today).TotalDays,
                 Status = item.ProductBatch.QuantityAvailable == 0 || item.ProductBatch.ExpiryDate.Date < today
                     ? "Expired"
-                    : item.ProductBatch.ExpiryDate.Date >= today && item.ProductBatch.ExpiryDate.Date <= expiringSoonDate
-                        ? "Expiring Soon"
-                        : item.ProductBatch.QuantityAvailable <= 0
-                            ? "Expired"
+                    : item.ProductBatch.QuantityAvailable <= item.ProductBatch.Product!.MinimumStockLevel
+                        ? "Low Stock"
+                        : item.ProductBatch.ExpiryDate.Date >= today && item.ProductBatch.ExpiryDate.Date <= expiringSoonDate
+                            ? "Expiring Soon"
                             : "Good"
             })
             .ToListAsync();
@@ -86,10 +86,10 @@ public class StockTransactionRepository : IStockTransactionRepository
                 DaysRemaining = (int)(item.ProductBatch.ExpiryDate.Date - today).TotalDays,
                 Status = item.ProductBatch.QuantityAvailable == 0 || item.ProductBatch.ExpiryDate.Date < today
                     ? "Expired"
-                    : item.ProductBatch.ExpiryDate.Date >= today && item.ProductBatch.ExpiryDate.Date <= expiringSoonDate
-                        ? "Expiring Soon"
-                        : item.ProductBatch.QuantityAvailable <= 0
-                            ? "Expired"
+                    : item.ProductBatch.QuantityAvailable <= item.ProductBatch.Product!.MinimumStockLevel
+                        ? "Low Stock"
+                        : item.ProductBatch.ExpiryDate.Date >= today && item.ProductBatch.ExpiryDate.Date <= expiringSoonDate
+                            ? "Expiring Soon"
                             : "Good"
             })
             .FirstOrDefaultAsync();

@@ -104,10 +104,10 @@ public class ProductRepository : IProductRepository
                         transactionItem.ProductId == item.Product.ProductId),
                 Status = item.Stock == 0 && item.HasExpiredBatch
                     ? "Expired"
-                    : item.HasExpiringBatch
-                        ? "Expiring Soon"
-                        : item.Stock <= item.Product.MinimumStockLevel
-                            ? "Low Stock"
+                    : item.Stock <= item.Product.MinimumStockLevel
+                        ? "Low Stock"
+                        : item.HasExpiringBatch
+                            ? "Expiring Soon"
                             : "In Stock"
             });
     }

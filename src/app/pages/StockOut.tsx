@@ -201,6 +201,11 @@ export function StockOut() {
           getExpiryTimestamp(getBatchExpiryValue(b))
       );
 
+  const sortedProductNames = [
+    ...new Set(batchOptions.map((item) => item.productName))
+  ].sort((a, b) => a.localeCompare(b));
+
+
   const applyBatchSelection = (rowId: number, batch: ProductBatchOption | undefined) => {
     updateRow(rowId, "productBatchId", batch?.productBatchId ?? 0);
     updateRow(rowId, "batch", batch?.batchNumber ?? "");
@@ -554,8 +559,8 @@ export function StockOut() {
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="font-semibold text-slate-800">â‚¹{row.batchCostPrice.toFixed(2)}</TableCell>
-                    <TableCell className="font-semibold text-slate-800">â‚¹{row.batchSellingPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-slate-800">₹{row.batchCostPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold text-slate-800">₹{row.batchSellingPrice.toFixed(2)}</TableCell>
                     <TableCell>
                       <div className="space-y-2">
                       <Input

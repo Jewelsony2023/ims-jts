@@ -45,7 +45,7 @@ export function Inventory() {
       const response = await api.get<InventoryItem[]>(
         `${import.meta.env.VITE_API_URL}/api/stocktransactions/inventory`,
       );
-      setInventory(response.data);
+      setInventory(response.data.filter((item) => item.quantity > 0));
     };
 
     fetchInventory().catch((error) => {

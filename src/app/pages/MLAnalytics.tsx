@@ -1,26 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, ShieldAlert } from "lucide-react";
 import api from "../../lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Skeleton } from "../components/ui/skeleton";
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+
+// existing types preserved
 
 type ForecastResult = {
   forecastId: number;
@@ -37,13 +34,6 @@ type ForecastResult = {
 type MlMetric = {
   modelName: string;
   mape: number;
-};
-
-type StatCard = {
-  title: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
 };
 
 type ForecastChartPoint = {
@@ -75,25 +65,64 @@ function MetricCardIcon({ className }: { className?: string }) {
   return <BarChart3 className={className} />;
 }
 
+function MetricCard({
+  title,
+  value,
+  color,
+  loading,
+}: {
+  title: string;
+  value: string;
+  color: string;
+  loading: boolean;
+}) {
+  return (
+    <Card className="border-none shadow-md">
+      <CardContent className="p-5">
+        <div className="mb-4 flex items-center justify-center">
+          <div className={`${color} rounded-lg p-3`}>
+            <MetricCardIcon className="h-5 w-5 text-white" />
+          </div>
+        </div>
+        <div className="text-center">
+          {loading ? (
+            <Skeleton className="mx-auto h-8 w-24" />
+          ) : (
+            <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
+          )}
+          {loading ? (
+            <Skeleton className="mx-auto mt-2 h-4 w-28" />
+          ) : (
+            <p className="text-sm text-slate-500">{title}</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function MLAnalytics() {
   const [forecastResults, setForecastResults] = useState<ForecastResult[]>([]);
   const [mlMetrics, setMlMetrics] = useState<MlMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       try {
         const [forecastResponse, metricsResponse] = await Promise.all([
           api.get<ForecastResult[]>(`${import.meta.env.VITE_API_URL}/api/forecasts`),
-          api.get<MlMetric[]>(`${import.meta.env.VITE_API_URL}/api/ml/metrics`),
+          api.get<MlMetric[]>(`${import.meta.env.VITE_API_URL}/api/Ml/metrics`),
         ]);
 
         setForecastResults(forecastResponse.data);
         setMlMetrics(metricsResponse.data);
+        setLoadError(null);
       } catch (error) {
         console.error(error);
         setForecastResults([]);
         setMlMetrics([]);
+        setLoadError("Unable to load live model metrics right now.");
       } finally {
         setIsLoading(false);
       }
@@ -114,72 +143,22 @@ export function MLAnalytics() {
     (forecast) => forecast.riskLevel.toUpperCase() === "HIGH",
   ).length;
 
-  const selectedModel = useMemo(() => {
-    if (mlMetrics.length === 0) {
-      return null;
-    }
+  const metricLookup = useMemo(() => {
+    return new Map(mlMetrics.map((metric) => [metric.modelName.toLowerCase(), metric.mape]));
+  }, [mlMetrics]);
 
+  const selectedModel = useMemo(() => {
+    if (mlMetrics.length === 0) return null;
     return [...mlMetrics].sort((left, right) => left.mape - right.mape)[0] ?? null;
   }, [mlMetrics]);
 
-  const metricCards: StatCard[] = useMemo(() => {
-    const cards: StatCard[] = [
-      {
-        title: "Prophet MAPE",
-        value: mlMetrics.find((metric) => metric.modelName === "Prophet")
-          ? `${mlMetrics.find((metric) => metric.modelName === "Prophet")!.mape.toFixed(2)}%`
-          : "-",
-        icon: MetricCardIcon,
-        color: "bg-slate-700",
-      },
-      {
-        title: "LightGBM MAPE",
-        value: mlMetrics.find((metric) => metric.modelName === "LightGBM")
-          ? `${mlMetrics.find((metric) => metric.modelName === "LightGBM")!.mape.toFixed(2)}%`
-          : "-",
-        icon: MetricCardIcon,
-        color: "bg-emerald-500",
-      },
-      {
-        title: "ARIMA MAPE",
-        value: mlMetrics.find((metric) => metric.modelName === "ARIMA")
-          ? `${mlMetrics.find((metric) => metric.modelName === "ARIMA")!.mape.toFixed(2)}%`
-          : "-",
-        icon: MetricCardIcon,
-        color: "bg-orange-500",
-      },
-      {
-        title: "Selected Model",
-        value: selectedModel ? selectedModel.modelName : "-",
-        icon: ShieldAlert,
-        color: "bg-blue-500",
-      },
-    ];
+  const topForecastChartData = sortedForecastResults
+    .map((forecast) => ({
+      productName: formatDisplayName(forecast.productName, productDisplayMap),
+      forecastDemand: forecast.forecastDemand,
+    }))
+    .slice(0, 10) satisfies ForecastChartPoint[];
 
-    return cards;
-  }, [mlMetrics, selectedModel]);
-
-  const statCards: StatCard[] = [
-    {
-      title: "Forecasted Products",
-      value: forecastResults.length.toString(),
-      icon: BarChart3,
-      color: "bg-blue-500",
-    },
-    {
-      title: "High Risk Products",
-      value: highRiskProducts.toString(),
-      icon: ShieldAlert,
-      color: "bg-orange-500",
-    },
-  ];
-
-  const chartData = sortedForecastResults.map((forecast) => ({
-    productName: formatDisplayName(forecast.productName, productDisplayMap),
-    forecastDemand: forecast.forecastDemand,
-  })) satisfies ForecastChartPoint[];
-
-  const topForecastChartData = chartData.slice(0, 10);
   const forecastTableData = sortedForecastResults.length <= 10
     ? sortedForecastResults
     : sortedForecastResults.slice(0, 10);
@@ -199,37 +178,49 @@ export function MLAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((card) => {
-          const Icon = card.icon;
-
-          return (
-            <Card key={card.title} className="border-none shadow-md">
-              <CardContent className="p-5">
-                <div className="mb-4 flex items-center justify-center">
-                  <div className={`${card.color} rounded-lg p-3`}>
-                    <Icon className="h-5 w-5 text-white" />
-                  </div>
-                </div>
-                <div className="text-center">
-                  {isLoading ? (
-                    <Skeleton className="mx-auto h-8 w-24" />
-                  ) : (
-                    <h3 className="text-2xl font-bold text-slate-800">
-                      {card.value}
-                    </h3>
-                  )}
-                  {isLoading ? (
-                    <Skeleton className="mx-auto mt-2 h-4 w-28" />
-                  ) : (
-                    <p className="text-sm text-slate-500">{card.title}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <MetricCard
+          title="Prophet"
+          value={metricLookup.has("prophet") ? `${metricLookup.get("prophet")!.toFixed(2)}%` : "-"}
+          color="bg-slate-700"
+          loading={isLoading}
+        />
+        <MetricCard
+          title="LightGBM"
+          value={metricLookup.has("lightgbm") ? `${metricLookup.get("lightgbm")!.toFixed(2)}%` : "-"}
+          color="bg-emerald-500"
+          loading={isLoading}
+        />
+        <MetricCard
+          title="ARIMA"
+          value={metricLookup.has("arima") ? `${metricLookup.get("arima")!.toFixed(2)}%` : "-"}
+          color="bg-orange-500"
+          loading={isLoading}
+        />
       </div>
+
+      <Card className="border-none shadow-md">
+        <CardContent className="p-5">
+          {isLoading ? (
+            <Skeleton className="h-12 w-full" />
+          ) : loadError ? (
+            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              {loadError}
+            </div>
+          ) : selectedModel ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge className="bg-blue-500 text-white">Best Performing Model</Badge>
+              <div className="text-sm text-slate-700">
+                <span className="font-semibold">{selectedModel.modelName}</span>
+                <span className="mx-2 text-slate-400">|</span>
+                <span>Lowest MAPE: {selectedModel.mape.toFixed(2)}%</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500">No model metrics available.</div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-none shadow-md">
         <CardHeader>
@@ -244,7 +235,7 @@ export function MLAnalytics() {
               <Skeleton className="h-6 w-48" />
               <Skeleton className="h-[280px] w-full" />
             </div>
-          ) : chartData.length === 0 ? (
+          ) : topForecastChartData.length === 0 ? (
             <div className="flex h-[360px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
               No forecast data available for visualization.
             </div>
@@ -284,142 +275,53 @@ export function MLAnalytics() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <ChartCard title="Revenue Trend">
-          <div className="mb-4 flex gap-2">
-            <button
-              onClick={() => setRevenueView("weekly")}
-              className={
-                revenueView === "weekly"
-                  ? "rounded bg-blue-600 px-3 py-1 text-white"
-                  : "rounded bg-slate-200 px-3 py-1"
-              }
-            >
-              Weekly
-            </button>
-            <button
-              onClick={() => setRevenueView("monthly")}
-              className={
-                revenueView === "monthly"
-                  ? "rounded bg-blue-600 px-3 py-1 text-white"
-                  : "rounded bg-slate-200 px-3 py-1"
-              }
-            >
-              Monthly
-            </button>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="month" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} name="Revenue" />
-              <Line type="monotone" dataKey="profit" stroke="#06b6d4" strokeWidth={3} name="Profit" />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg">Forecast Demand by Product</CardTitle>
-            <p className="text-sm text-slate-600">
-              Top 5 products by forecast demand.
-            </p>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-[300px] space-y-4 rounded-lg bg-slate-50 p-4">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-[220px] w-full" />
-              </div>
-            ) : topForecastChartData.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
-                No forecast data available for visualization.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topForecastChartData} layout="vertical" margin={{ top: 8, right: 24, left: 24, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis
-                    type="number"
-                    dataKey="forecastDemand"
-                    stroke="#64748b"
-                    tickFormatter={(value) => Number(value).toLocaleString()}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="productName"
-                    stroke="#64748b"
-                    width={180}
-                  />
-                  <Tooltip
-                    formatter={(value) => Number(value).toLocaleString()}
-                    labelStyle={{ color: "#0f172a" }}
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
-                    }}
-                  />
-                  <Bar dataKey="forecastDemand" fill="#0f766e" radius={[0, 10, 10, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <ChartCard title="Stock Movement Trend">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={stockMovementData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="month" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="stockIn" fill="#10b981" name="Stock In" />
-              <Bar dataKey="stockOut" fill="#f97316" name="Stock Out" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg">Activity Feed</CardTitle>
-          </CardHeader>
-          <CardContent className="max-h-[600px] space-y-4 overflow-y-auto">
-            {activityFeed.map((activity, index) => (
-              <div key={index} className="rounded-lg border border-slate-200 bg-white p-4">
-                <Badge
-                  className={
-                    activity.title === "StockIn"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-orange-100 text-orange-700"
-                  }
-                >
-                  {activity.title}
-                </Badge>
-                <p className="mt-3 font-semibold text-slate-800">{activity.description}</p>
-                <p className="text-sm text-slate-500">{new Date(activity.createdAt).toLocaleString()}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border-none shadow-md">
+        <CardHeader>
+          <CardTitle className="text-lg">Forecast Results</CardTitle>
+          <p className="text-sm text-slate-600">
+            Forecast outputs ordered by demand, highest first.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Current Inventory</TableHead>
+                <TableHead>Forecast Demand</TableHead>
+                <TableHead>Recommended Order</TableHead>
+                <TableHead>Risk Level</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {forecastTableData.map((forecast, index) => (
+                <TableRow key={forecast.forecastId}>
+                  <TableCell className="font-medium">#{index + 1}</TableCell>
+                  <TableCell className="font-medium">
+                    {formatDisplayName(forecast.productName, productDisplayMap)}
+                  </TableCell>
+                  <TableCell>
+                    {formatDisplayName(forecast.categoryName, categoryDisplayMap)}
+                  </TableCell>
+                  <TableCell>{Number(forecast.currentInventory).toLocaleString()}</TableCell>
+                  <TableCell>{Number(forecast.forecastDemand).toLocaleString()}</TableCell>
+                  <TableCell>{Number(forecast.recommendedOrder).toLocaleString()}</TableCell>
+                  <TableCell>{getRiskBadge(forecast.riskLevel)}</TableCell>
+                </TableRow>
+              ))}
+              {!isLoading && forecastResults.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-slate-500">
+                    No forecast results available.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
-  );
-}
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Card className="min-w-0 border-none shadow-md">
-      <CardHeader>
-        <CardTitle className="text-lg">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
   );
 }

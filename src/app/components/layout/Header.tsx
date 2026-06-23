@@ -68,7 +68,7 @@ export function Header({ onToggleMenu }: HeaderProps) {
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
                 <div className="hidden text-left md:block">
-                  <p className="text-sm font-semibold text-slate-800">John Doe</p>
+                  <p className="text-sm font-semibold text-slate-800">Test User</p>
                   <p className="text-xs text-slate-500">Administrator</p>
                 </div>
               </Button>

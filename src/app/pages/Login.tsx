@@ -272,7 +272,7 @@ const handleLogin = async (
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Enter the password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="h-11 border-slate-200 bg-slate-50 pl-10 pr-10 focus:border-teal-500 focus:ring-teal-500/20"

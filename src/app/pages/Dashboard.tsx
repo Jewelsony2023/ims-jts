@@ -252,6 +252,8 @@ export function Dashboard() {
         })}
       </div>
 
+
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ChartCard title="Revenue Trend">
           <div className="mb-4 flex gap-2">
@@ -289,6 +291,21 @@ export function Dashboard() {
           </ResponsiveContainer>
         </ChartCard>
 
+        <ChartCard title="Stock Movement Trend">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={stockMovementData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="month" stroke="#64748b" />
+              <YAxis stroke="#64748b" />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="stockIn" fill="#10b981" name="Stock In" />
+              <Bar dataKey="stockOut" fill="#f97316" name="Stock Out" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ChartCard title="Forecast Demand by Product">
           <p className="mb-4 text-sm text-slate-600">
             Top 5 products by forecast demand.
@@ -339,28 +356,12 @@ export function Dashboard() {
             </ResponsiveContainer>
           )}
         </ChartCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <ChartCard title="Stock Movement Trend">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={stockMovementData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="month" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="stockIn" fill="#10b981" name="Stock In" />
-              <Bar dataKey="stockOut" fill="#f97316" name="Stock Out" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
 
         <Card className="border-none shadow-md">
           <CardHeader>
             <CardTitle className="text-lg">Activity Feed</CardTitle>
           </CardHeader>
-          <CardContent className="max-h-[600px] space-y-4 overflow-y-auto">
+          <CardContent className="max-h-[360px] space-y-4 overflow-y-auto">
             {activityFeed.map((activity, index) => (
               <div key={index} className="rounded-lg border border-slate-200 bg-white p-4">
                 <Badge
@@ -379,6 +380,8 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+
     </div>
   );
 }

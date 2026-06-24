@@ -467,7 +467,7 @@ export function Products() {
                       <div>
                         <span className="font-medium">{product.name}</span>
                         {!product.image && (
-                          <p className="text-xs text-slate-500">Placeholder image</p>
+                          <p className="text-xs text-slate-500"></p>
                         )}
                       </div>
                     </div>

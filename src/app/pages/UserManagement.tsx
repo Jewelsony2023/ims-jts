@@ -25,13 +25,9 @@ export function UserManagement() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
           <p className="text-slate-600 mt-1">
-            Manage user accounts, roles, and permissions
           </p>
         </div>
-        <Button className="bg-emerald-500 hover:bg-emerald-600">
-          <Plus className="w-4 h-4 mr-2" />
-          Add User
-        </Button>
+
       </div>
 
       {/* Statistics */}

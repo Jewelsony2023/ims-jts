@@ -120,7 +120,7 @@ export function UserManagement() {
                   {users.filter((u) => u.role === "Manager").length}
                 </h3>
               </div>
-              <Badge className="bg-blue-100 text-blue-700">Department</Badge>
+              <Badge className="bg-blue-100 text-blue-700"></Badge>
             </div>
           </CardContent>
         </Card>
@@ -129,12 +129,12 @@ export function UserManagement() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600 mb-1">Operators</p>
+                <p className="text-sm text-slate-600 mb-1"></p>
                 <h3 className="text-2xl font-bold text-slate-800">
                   {users.filter((u) => u.role === "Operator").length}
                 </h3>
               </div>
-              <Badge className="bg-emerald-100 text-emerald-700">Basic</Badge>
+              <Badge className="bg-emerald-100 text-emerald-700"></Badge>
             </div>
           </CardContent>
         </Card>

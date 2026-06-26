@@ -136,19 +136,7 @@ export function UserManagement() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-md border-l-4 border-l-slate-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">Viewers</p>
-                <h3 className="text-2xl font-bold text-slate-800">
-                  {users.filter((u) => u.role === "Viewer").length}
-                </h3>
-              </div>
-              <Badge className="bg-slate-100 text-slate-700">Read Only</Badge>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Users Table */}

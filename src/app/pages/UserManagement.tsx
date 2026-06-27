@@ -111,16 +111,7 @@ export function UserManagement() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-md border-l-4 border-l-blue-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
 
-              </div>
-              <Badge className="bg-blue-100 text-blue-700"></Badge>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="border-none shadow-md border-l-4 border-l-emerald-500">
           <CardContent className="p-6">

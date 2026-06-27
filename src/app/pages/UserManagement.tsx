@@ -113,19 +113,7 @@ export function UserManagement() {
 
 
 
-        <Card className="border-none shadow-md border-l-4 border-l-emerald-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1"></p>
-                <h3 className="text-2xl font-bold text-slate-800">
-                  {users.filter((u) => u.role === "Operator").length}
-                </h3>
-              </div>
-              <Badge className="bg-emerald-100 text-emerald-700"></Badge>
-            </div>
-          </CardContent>
-        </Card>
+      
 
 
       </div>

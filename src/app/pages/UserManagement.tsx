@@ -128,9 +128,7 @@ export function UserManagement() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700">
-                    Permission
-                  </th>
+
                   <th className="text-center py-3 px-4 font-semibold text-slate-700">
                     Administrator
                   </th>

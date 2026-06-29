@@ -122,9 +122,7 @@ export function UserManagement() {
 
       {/* Permissions Overview */}
       <Card className="border-none shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg">Role Permissions Matrix</CardTitle>
-        </CardHeader>
+
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
